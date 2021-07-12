@@ -1,4 +1,4 @@
-/*
+﻿/*
 ================================================================================================
 
 Description	:	DOM-style JSON reader/writer.
@@ -1150,6 +1150,8 @@ static void ksJson_WriteValue( const ksJson * node, int recursion, char ** buffe
 	}
 	else if ( node->type == JSON_STRING )
 	{
+		// 刘旭修改：输出字符串时在两端加引号
+		ksJson_Printf(bufferInOut, lengthInOut, offsetInOut, 1, "\"");
 		for ( const char * ptr = node->valueString; ptr[0] != '\0'; ptr++ )
 		{
 			if ( (unsigned char)ptr[0] < ' ' || ptr[0] == '\"' || ptr[0] == '\\' )
@@ -1171,6 +1173,7 @@ static void ksJson_WriteValue( const ksJson * node, int recursion, char ** buffe
 				ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 1, "%c", ptr[0] );
 			}
 		}
+		ksJson_Printf(bufferInOut, lengthInOut, offsetInOut, 1, "\"");
 		ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "%s\n", lastChild ? "" : "," );
 	}
 	else if ( node->type == JSON_OBJECT )
