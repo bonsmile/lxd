@@ -27,12 +27,16 @@ add_library( lxd SHARED
 	crypt.cpp
 	json.h
 	threading.h
+	nanoseconds.h
 	string.h
 	string.cpp
 	utils.h
 	utils.cpp
 	AsyncFile.h
 	AsyncFile.cpp
+	AsyncHttp.h
+	AsyncHttp.cpp
+	WinHTTPWrappers.h
 	${VERSION_RC}
 )
 
