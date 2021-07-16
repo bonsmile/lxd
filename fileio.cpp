@@ -1,4 +1,4 @@
-#include "fileio.h"
+﻿#include "fileio.h"
 #include <Windows.h>
 #include <fileapi.h>
 #include <pathcch.h>
@@ -7,11 +7,7 @@
 
 namespace lxd {
 	bool FileExists(std::wstring_view path) {
-		GetFileAttributesW(path.data());
-		if(INVALID_FILE_ATTRIBUTES == GetFileAttributesW(path.data()) && GetLastError() == ERROR_FILE_NOT_FOUND) {
-			return false;
-		}
-		return true;
+		return GetFileAttributesW(path.data()) != INVALID_FILE_ATTRIBUTES;
 	}
 
 	bool openModeCanCreate(int openMode) {
