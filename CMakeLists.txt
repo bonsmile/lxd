@@ -27,8 +27,8 @@ add_library( lxd SHARED
 	crypt.cpp
 	json.h
 	threading.h
-	string.h
-	string.cpp
+	str.h
+	str.cpp
 	utils.h
 	utils.cpp
 	AsyncFile.h
