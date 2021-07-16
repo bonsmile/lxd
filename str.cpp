@@ -1,7 +1,23 @@
-﻿#include "string.h"
+﻿#include "str.h"
+#include <string.h>
+#include <assert.h>
 #include <algorithm>
+#include <cctype>
 
 namespace lxd {
+	void Upper(std::string& str) {
+		std::transform(str.begin(), str.end(), str.begin(), std::toupper);
+	}
+	void Upper(std::wstring& str) {
+		std::transform(str.begin(), str.end(), str.begin(), std::toupper);
+	}
+	void Lower(std::string& str) {
+		std::transform(str.begin(), str.end(), str.begin(), std::tolower);
+	}
+	void Lower(std::wstring& str) {
+		std::transform(str.begin(), str.end(), str.begin(), std::tolower);
+	}
+
 	std::vector<std::string_view> Split(std::string_view str, std::string_view delims) {
 		std::vector<std::string_view> output;
 		//output.reserve(str.size() / 2);

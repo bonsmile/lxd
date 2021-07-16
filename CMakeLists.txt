@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.16.0 )
 
-project(lxd VERSION 1.0.0.21)
+project(lxd VERSION 1.0.0.22)
 
 set(VERSION_RC ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in
@@ -28,8 +28,8 @@ add_library( lxd SHARED
 	json.h
 	threading.h
 	nanoseconds.h
-	string.h
-	string.cpp
+	str.h
+	str.cpp
 	utils.h
 	utils.cpp
 	AsyncFile.h
