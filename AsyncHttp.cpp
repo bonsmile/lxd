@@ -125,7 +125,7 @@ HRESULT GetRequest::Initialize(
 	const WinHTTPWrappers::CConnection& connection,
 	LPCWSTR pwszObjectName,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-	std::function<void(int)> onProgress,
+	std::function<void(float)> onProgress,
 	DWORD httpAuthScheme,
 	const std::pair<std::wstring_view, std::wstring_view>& cred
 ) {
@@ -171,7 +171,7 @@ HRESULT GetRequest::OnReadData(_In_reads_bytes_(dwBytesRead) const void* lpvBuff
 		if (m_nContentLength <= 0) {
 			_onProgress(0);
 		} else {
-			_onProgress(int(m_nTotalBytesRead * 100 / m_nContentLength));
+			_onProgress(float(m_nTotalBytesRead) / m_nContentLength);
 		}
 	}
 
@@ -190,7 +190,7 @@ HRESULT PostRequest::Initialize(
 	const WinHTTPWrappers::CConnection& connection,
 	LPCWSTR pwszObjectName,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-	std::function<void(int)> onProgress,
+	std::function<void(float)> onProgress,
 	const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
 	const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files,
 	DWORD httpAuthScheme,
@@ -249,7 +249,7 @@ HRESULT PostRequest::OnWriteData() {
 			if (m_nFileToUploadSize <= 0) {
 				_onProgress(0);
 			} else {
-				_onProgress(int(m_nFileToUploadIndex * 100 / m_nFileToUploadSize));
+				_onProgress(float(m_nFileToUploadIndex) / m_nFileToUploadSize);
 			}
 		}
 	} else {
@@ -266,7 +266,7 @@ HRESULT PostRequest::OnWriteData() {
 			_bufferPos += nBytesWrite;
 
 			if (_onProgress) {
-				_onProgress(_bufferPos * 100 / m_dwRequestSize);
+				_onProgress(float(_bufferPos) / m_dwRequestSize);
 			}
 
 			hr = _bufferPos >= m_dwRequestSize ? S_FALSE : S_OK;
@@ -323,7 +323,7 @@ HRESULT HttpClient::Initialize() {
 GetRequestTask HttpClient::GetAsync(
 	std::wstring_view url,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-	std::function<void(int progress)> onProgress,
+	std::function<void(float progress) > onProgress,
 	std::wstring_view fileToSave,
 	DWORD httpAuthScheme,
 	const std::pair<std::wstring_view, std::wstring_view>& cred
@@ -364,7 +364,7 @@ GetRequestTask HttpClient::GetAsync(
 PostRequestTask HttpClient::PostFormDataAsync(
 	std::wstring_view url,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-	std::function<void(int progress)> onProgress,
+	std::function<void(float progress)> onProgress,
 	const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
 	const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files,
 	DWORD httpAuthScheme,
@@ -404,7 +404,16 @@ PostRequestTask HttpClient::PostFormDataAsync(
 	);
 }
 
-GetRequestTask::GetRequestTask(const WinHTTPWrappers::CSession& session, LPCWSTR pwszServerName, LPCWSTR pwszObjectName, std::function<void(HRESULT, DWORD, std::string_view)> onComplete, std::function<void(int progress)> onProgress, std::wstring_view fileToSave, DWORD httpAuthScheme, const std::pair<std::wstring_view, std::wstring_view>& cred) {
+GetRequestTask::GetRequestTask(
+	const WinHTTPWrappers::CSession& session,
+	LPCWSTR pwszServerName,
+	LPCWSTR pwszObjectName,
+	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
+	std::function<void(float progress)> onProgress,
+	std::wstring_view fileToSave,
+	DWORD httpAuthScheme,
+	const std::pair<std::wstring_view, std::wstring_view>& cred
+) {
 	_conn.reset(new WinHTTPWrappers::CConnection());
 	HRESULT hr = _conn->Initialize(session, pwszServerName);
 	if (FAILED(hr)) {
@@ -452,7 +461,18 @@ bool GetRequestTask::IsRequesting() {
 	return _getReq->IsRequesting();
 }
 
-PostRequestTask::PostRequestTask(const WinHTTPWrappers::CSession& session, LPCWSTR pwszServerName, LPCWSTR pwszObjectName, std::function<void(HRESULT, DWORD, std::string_view)> onComplete, std::function<void(int progress)> onProgress, const std::vector<std::pair<std::string_view, std::string_view>>& pairs, const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files, DWORD httpAuthScheme, const std::pair<std::wstring_view, std::wstring_view>& cred) {
+PostRequestTask::PostRequestTask(
+	const WinHTTPWrappers::CSession& session,
+	LPCWSTR pwszServerName,
+	LPCWSTR pwszObjectName,
+	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
+	std::function<void(float progress)> onProgress,
+	const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
+	const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files,
+	DWORD httpAuthScheme,
+	const std::pair<std::wstring_view,
+	std::wstring_view>& cred
+) {
 	_conn.reset(new WinHTTPWrappers::CConnection());
 	HRESULT hr = _conn->Initialize(session, pwszServerName);
 	if (FAILED(hr)) {

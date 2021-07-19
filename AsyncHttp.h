@@ -83,7 +83,7 @@ public:
 		const WinHTTPWrappers::CConnection& connection,
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-		std::function<void(int)> onProgress,
+		std::function<void(float progress)> onProgress,
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
@@ -99,7 +99,7 @@ public:
 	HRESULT OnReadData(_In_reads_bytes_(dwBytesRead) const void* lpvBuffer, _In_ DWORD dwBytesRead) override;
 private:
 	std::function<void(HRESULT, DWORD, std::string_view)> _onComplete;
-	std::function<void(int)> _onProgress;
+	std::function<void(float progress)> _onProgress;
 };
 
 class DLL_PUBLIC GetRequestTask {
@@ -118,7 +118,7 @@ public:
 		LPCWSTR pwszServerName,
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-		std::function<void(int progress)> onProgress = {},
+		std::function<void(float progress)> onProgress = {},
 		std::wstring_view fileToSave = L"",
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
@@ -148,7 +148,7 @@ public:
 		const WinHTTPWrappers::CConnection& connection,
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-		std::function<void(int)> onProgress,
+		std::function<void(float progress)> onProgress,
 		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
 		DWORD httpAuthScheme = 0,
@@ -173,7 +173,7 @@ public:
 	) const;
 private:
 	std::function<void(HRESULT, DWORD, std::string_view)> _onComplete;
-	std::function<void(int)> _onProgress;
+	std::function<void(float)> _onProgress;
 
 	const wchar_t* _formDataBoundaryW = L"1SUB64X86GK5";
 	const char* _formDataBoundary = "1SUB64X86GK5";
@@ -199,7 +199,7 @@ public:
 		LPCWSTR pwszServerName,
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
-		std::function<void(int progress)> onProgress = {},
+		std::function<void(float progress)> onProgress = {},
 		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
 		DWORD httpAuthScheme = 0,
@@ -223,7 +223,7 @@ public:
 	GetRequestTask GetAsync(
 		std::wstring_view url,
 		std::function<void(HRESULT hr, DWORD lastStatusCode, std::string_view response)> onComplete,
-		std::function<void(int progress)> onProgress = {},
+		std::function<void(float progress)> onProgress = {},
 		std::wstring_view fileToSave = L"",
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
@@ -232,7 +232,7 @@ public:
 	PostRequestTask PostFormDataAsync(
 		std::wstring_view url,
 		std::function<void(HRESULT hr, DWORD lastStatusCode, std::string_view response)> onComplete,
-		std::function<void(int progress)> onProgress = {},
+		std::function<void(float progress)> onProgress = {},
 		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
 		DWORD httpAuthScheme = 0,
