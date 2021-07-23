@@ -98,8 +98,29 @@ namespace lxd {
 		return buffer;
 	}
 
+	bool RemoveFile(std::wstring_view path) {
+		return DeleteFile(path.data()) != 0;
+	}
+
 	bool CreateDir(std::wstring_view path) {
 		return ::CreateDirectoryW(path.data(), nullptr);
+	}
+
+	bool CreateDirRecursive(std::wstring_view path) {
+		if (DirExists(path)) {
+			return true;
+		}
+
+		size_t i = path.find_last_of(L"\\");
+		if (i == std::wstring_view::npos) {
+			return false;
+		}
+
+		if (!CreateDirRecursive(std::wstring(path.data(), i))) {
+			return false;
+		}
+
+		return CreateDir(path);
 	}
 
 	int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories) {
