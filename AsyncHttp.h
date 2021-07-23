@@ -5,6 +5,7 @@
 #include <string_view>
 #include <functional>
 #include <mutex>
+#include <cassert>
 
 
 namespace lxd {
@@ -102,7 +103,16 @@ private:
 	std::function<void(float progress)> _onProgress;
 };
 
-class DLL_PUBLIC GetRequestTask {
+class RequestTask {
+public:
+	virtual void Wait() = 0;
+
+	virtual void Cancel() = 0;
+
+	virtual bool IsRequesting() = 0;
+};
+
+class GetRequestTask : public RequestTask {
 public:
 	// 只能移动不能复制
 	GetRequestTask(const GetRequestTask&) = delete;
@@ -124,11 +134,11 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
-	void Wait();
+	void Wait() override;
 
-	void Cancel();
+	void Cancel() override;
 
-	bool IsRequesting();
+	bool IsRequesting() override;
 private:
 	std::unique_ptr<WinHTTPWrappers::CConnection> _conn;
 	std::unique_ptr<GetRequest> _getReq;
@@ -183,7 +193,7 @@ private:
 	unsigned int _bufferPos = 0;
 };
 
-class DLL_PUBLIC PostRequestTask {
+class PostRequestTask : public RequestTask {
 public:
 	// 只能移动不能复制
 	PostRequestTask(const PostRequestTask&) = delete;
@@ -206,11 +216,11 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
-	void Wait();
+	void Wait() override;
 
-	void Cancel();
+	void Cancel() override;
 
-	bool IsRequesting();
+	bool IsRequesting() override;
 private:
 	std::unique_ptr<WinHTTPWrappers::CConnection> _conn;
 	std::unique_ptr<PostRequest> _postReq;
@@ -218,9 +228,15 @@ private:
 
 class DLL_PUBLIC HttpClient {
 public:
-	HRESULT Initialize();
+	HttpClient();
 
-	GetRequestTask GetAsync(
+	~HttpClient() {
+		for (const auto& pair : _tasks) {
+			pair.second->Wait();
+		}
+	}
+
+	unsigned int GetAsync(
 		std::wstring_view url,
 		std::function<void(HRESULT hr, DWORD lastStatusCode, std::string_view response)> onComplete,
 		std::function<void(float progress)> onProgress = {},
@@ -229,7 +245,7 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
-	PostRequestTask PostFormDataAsync(
+	unsigned int PostFormDataAsync(
 		std::wstring_view url,
 		std::function<void(HRESULT hr, DWORD lastStatusCode, std::string_view response)> onComplete,
 		std::function<void(float progress)> onProgress = {},
@@ -239,8 +255,23 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
+	bool Wait(unsigned int requestId);
+
+	bool Cancel(unsigned int requestId);
+
+	bool IsRequesting(unsigned int requestId);
+
 private:
+	unsigned int _NewTaskId() {
+		return _nextId++;
+	}
+
 	WinHTTPWrappers::CSession _session;
+
+	std::unordered_map<unsigned int, std::unique_ptr<RequestTask>> _tasks;
+	std::mutex _mutex;
+
+	std::atomic<unsigned int> _nextId = 0;
 };
 
 }

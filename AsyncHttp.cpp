@@ -315,12 +315,13 @@ std::string PostRequest::MergeFormData(
 	return result;
 }
 
-HRESULT HttpClient::Initialize() {
-	return _session.Initialize(L"WinHttpWrap", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS);
+HttpClient::HttpClient() {
+	HRESULT hr = _session.Initialize(L"WinHttpWrap", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS);
+	assert(SUCCEEDED(hr));
 }
 
 
-GetRequestTask HttpClient::GetAsync(
+unsigned int HttpClient::GetAsync(
 	std::wstring_view url,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 	std::function<void(float progress) > onProgress,
@@ -343,13 +344,18 @@ GetRequestTask HttpClient::GetAsync(
 		return {};
 	}
 
-	auto completeCb = [=](HRESULT hr, DWORD lastStatusCode, std::string_view response) {
+	unsigned int id = _NewTaskId();
+	
+	auto completeCb = [this, onComplete, id](HRESULT hr, DWORD lastStatusCode, std::string_view response) {
 		if (onComplete) {
 			onComplete(hr, lastStatusCode, response);
 		}
+
+		std::scoped_lock lk(_mutex);
+		_tasks.erase(id);
 	};
 
-	return GetRequestTask(
+	_tasks.emplace(id, new GetRequestTask(
 		_session,
 		CStringW(urlComp.lpszHostName, urlComp.dwHostNameLength),
 		CStringW(urlComp.lpszUrlPath, urlComp.dwUrlPathLength),
@@ -358,10 +364,12 @@ GetRequestTask HttpClient::GetAsync(
 		fileToSave,
 		httpAuthScheme,
 		cred
-	);
+	));
+
+	return id;
 }
 
-PostRequestTask HttpClient::PostFormDataAsync(
+unsigned int HttpClient::PostFormDataAsync(
 	std::wstring_view url,
 	std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 	std::function<void(float progress)> onProgress,
@@ -385,13 +393,17 @@ PostRequestTask HttpClient::PostFormDataAsync(
 		return {};
 	}
 
-	auto completeCb = [=](HRESULT hr, DWORD lastStatusCode, std::string_view response) {
+	unsigned int id = _NewTaskId();
+	auto completeCb = [onComplete, this, id](HRESULT hr, DWORD lastStatusCode, std::string_view response) {
 		if (onComplete) {
 			onComplete(hr, lastStatusCode, response);
 		}
-	};
 
-	return PostRequestTask(
+		std::scoped_lock lk(_mutex);
+		_tasks.erase(id);
+	};
+	
+	_tasks.emplace(id, new PostRequestTask(
 		_session,
 		CStringW(urlComp.lpszHostName, urlComp.dwHostNameLength),
 		CStringW(urlComp.lpszUrlPath, urlComp.dwUrlPathLength + urlComp.dwExtraInfoLength),
@@ -401,8 +413,48 @@ PostRequestTask HttpClient::PostFormDataAsync(
 		files,
 		httpAuthScheme,
 		cred
-	);
+	));
+
+	return id;
 }
+
+bool HttpClient::Wait(unsigned int requestId) {
+	std::unique_lock lk(_mutex);
+
+	auto it = _tasks.find(requestId);
+	if (it == _tasks.end()) {
+		return false;
+	}
+
+	lk.unlock();
+
+	it->second->Wait();
+	return true;
+}
+
+bool HttpClient::Cancel(unsigned int requestId) {
+	std::scoped_lock lk(_mutex);
+
+	auto it = _tasks.find(requestId);
+	if (it == _tasks.end()) {
+		return false;
+	}
+
+	it->second->Cancel();
+	return true;
+}
+
+bool HttpClient::IsRequesting(unsigned int requestId) {
+	std::scoped_lock lk(_mutex);
+
+	auto it = _tasks.find(requestId);
+	if (it == _tasks.end()) {
+		return false;
+	}
+
+	return it->second->IsRequesting();
+}
+
 
 GetRequestTask::GetRequestTask(
 	const WinHTTPWrappers::CSession& session,

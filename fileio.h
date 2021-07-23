@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "defines.h"
 #include <string_view>
@@ -31,8 +31,10 @@ namespace lxd {
 	DLL_PUBLIC bool CloseFile(void* handle);
 	DLL_PUBLIC bool WriteFile(std::wstring_view path, char const* buffer, size_t bufferSize);
 	DLL_PUBLIC std::string ReadFile(std::wstring_view path);
+	DLL_PUBLIC bool RemoveFile(std::wstring_view path);
 
 	DLL_PUBLIC bool CreateDir(std::wstring_view path);
+	DLL_PUBLIC bool CreateDirRecursive(std::wstring_view path);
 	DLL_PUBLIC int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories = true);
 	DLL_PUBLIC bool DirExists(std::wstring_view path);
 	DLL_PUBLIC bool ListDir(std::wstring_view path, std::vector<std::wstring>& result, bool recursive = false, const wchar_t* filter = nullptr);
