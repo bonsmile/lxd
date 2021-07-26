@@ -1,6 +1,7 @@
 ﻿#include "utils.h"
 #include <cassert>
 #include <Windows.h> // For Win32 API
+#include <shlobj_core.h>
 
 namespace lxd {
 	std::wstring GetPathOfExe() {
@@ -31,5 +32,15 @@ namespace lxd {
         assert(slash && dot);
         assert(slash < dot && dot < exe.size());
         return exe.substr(slash + 1, dot - slash - 1);
+    }
+
+    std::wstring GetPathOfAppData() {
+        PWSTR path = NULL;
+        HRESULT ok = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path);
+        assert(S_OK == ok);
+        std::wstring result(path);
+        CoTaskMemFree(path);
+
+        return result;
     }
 }

@@ -18,6 +18,12 @@ namespace lxd {
 		std::transform(str.begin(), str.end(), str.begin(), std::tolower);
 	}
 
+	std::string Lower(std::string_view str) {
+		std::string result(str);
+		std::transform(result.begin(), result.end(), result.begin(), std::tolower);
+		return result;
+	}
+
 	std::vector<std::string_view> Split(std::string_view str, std::string_view delims) {
 		std::vector<std::string_view> output;
 		//output.reserve(str.size() / 2);
