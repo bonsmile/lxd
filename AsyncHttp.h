@@ -230,11 +230,7 @@ class DLL_PUBLIC HttpClient {
 public:
 	HttpClient();
 
-	~HttpClient() {
-		for (const auto& pair : _tasks) {
-			pair.second->Wait();
-		}
-	}
+	~HttpClient();
 
 	unsigned int GetAsync(
 		std::wstring_view url,
@@ -257,6 +253,10 @@ public:
 
 	bool Wait(unsigned int requestId);
 
+	void WaitAll();
+
+	void CancelAll();
+
 	bool Cancel(unsigned int requestId);
 
 	bool IsRequesting(unsigned int requestId);
@@ -269,7 +269,7 @@ private:
 	WinHTTPWrappers::CSession _session;
 
 	std::unordered_map<unsigned int, std::unique_ptr<RequestTask>> _tasks;
-	std::mutex _mutex;
+	std::recursive_mutex _mutex;
 
 	std::atomic<unsigned int> _nextId = 0;
 };
