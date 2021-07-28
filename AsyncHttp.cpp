@@ -320,6 +320,10 @@ HttpClient::HttpClient() {
 	assert(SUCCEEDED(hr));
 }
 
+HttpClient::~HttpClient() {
+	CancelAll();
+}
+
 
 unsigned int HttpClient::GetAsync(
 	std::wstring_view url,
@@ -329,6 +333,8 @@ unsigned int HttpClient::GetAsync(
 	DWORD httpAuthScheme,
 	const std::pair<std::wstring_view, std::wstring_view>& cred
 ) {
+	std::scoped_lock lk(_mutex);
+
 	URL_COMPONENTS urlComp{};
 	urlComp.dwStructSize = sizeof(urlComp);
 	urlComp.dwSchemeLength = (DWORD)-1;
@@ -378,6 +384,8 @@ unsigned int HttpClient::PostFormDataAsync(
 	DWORD httpAuthScheme,
 	const std::pair<std::wstring_view, std::wstring_view>& cred
 ) {
+	std::scoped_lock lk(_mutex);
+
 	URL_COMPONENTS urlComp{};
 	urlComp.dwStructSize = sizeof(urlComp);
 	urlComp.dwSchemeLength = (DWORD)-1;
@@ -400,7 +408,9 @@ unsigned int HttpClient::PostFormDataAsync(
 		}
 
 		std::scoped_lock lk(_mutex);
-		_tasks.erase(id);
+		if (_tasks.find(id) != _tasks.end()) {
+			_tasks.erase(id);
+		}
 	};
 	
 	_tasks.emplace(id, new PostRequestTask(
@@ -430,6 +440,20 @@ bool HttpClient::Wait(unsigned int requestId) {
 
 	it->second->Wait();
 	return true;
+}
+
+void HttpClient::WaitAll() {
+	std::scoped_lock lk(_mutex);
+	for (const auto& pair : _tasks) {
+		pair.second->Wait();
+	}
+}
+
+void HttpClient::CancelAll() {
+	std::scoped_lock lk(_mutex);
+	for (const auto& pair : _tasks) {
+		pair.second->Cancel();
+	}
 }
 
 bool HttpClient::Cancel(unsigned int requestId) {
