@@ -924,7 +924,7 @@ typedef struct
 	int			threadCount;
 } ksThreadPool;
 
-void PoolStartThread( void * data )
+static void PoolStartThread( void * data )
 {
 	UNUSED_PARM( data );
 
