@@ -240,6 +240,99 @@ error:
         if(hSession) WinHttpCloseHandle(hSession);
     }
 
+    PostFormUrlencoded::PostFormUrlencoded(const wchar_t* host, unsigned short port, const wchar_t* path, bool https,
+                               std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs) {
+        std::string content;
+        // Specify an HTTP server.
+        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+                                         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                         WINHTTP_NO_PROXY_NAME,
+                                         WINHTTP_NO_PROXY_BYPASS,
+                                         0);
+
+        // Connect
+        if(hSession) {
+            hConnect = WinHttpConnect(hSession, host,
+                                      port, 0);
+        } else goto error;
+
+
+        // Create an HTTP request handle.
+        if(hConnect) {
+            hRequest = WinHttpOpenRequest(hConnect,
+                                          L"POST",
+                                          path,
+                                          NULL, WINHTTP_NO_REFERER,
+                                          WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                          https ? WINHTTP_FLAG_SECURE : 0);
+            if(!hRequest) goto error;
+        } else goto error;
+
+        // optional key/values
+        for(auto const& pair : pairs) {
+            std::string urikey;
+            urikey.resize(pair.first.size() * 3);
+            auto usize = lxd::uri_encode(pair.first.data(), pair.first.size(), urikey.data());
+            urikey.resize(usize);
+            std::string urivalue;
+            urivalue.resize(pair.second.size() * 3);
+            usize = lxd::uri_decode(pair.second.data(), pair.second.size(), urivalue.data());
+            urivalue.resize(usize);
+
+            content += fmt::format("&{}={}", urikey, urivalue);
+        }
+
+
+        if(!WinHttpSendRequest(hRequest,
+                               L"Content-Type: application/x-www-form-urlencoded",
+                               -1,
+                               content.data(),
+                               content.size(),
+                               content.size(),
+                               NULL)) goto error;
+
+        // End the request.
+        if(!WinHttpReceiveResponse(hRequest, NULL)) goto error;
+
+        // Keep checking for data until there is nothing left.
+        do {
+            // Check for available data.
+            dwSize = 0;
+            if(!WinHttpQueryDataAvailable(hRequest, &dwSize))
+                lxd::print("Error {} in WinHttpQueryDataAvailable.\n",
+                           GetLastError());
+
+            // Allocate space for the buffer.
+            auto pszOutBuffer = new char[dwSize + 1];
+            if(!pszOutBuffer) {
+                lxd::print("Out of memory\n");
+                dwSize = 0;
+            } else {
+                // Read the data.
+                ZeroMemory(pszOutBuffer, dwSize + 1);
+                pszOutBuffer[dwSize] = '\0';
+                if(!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
+                                    dwSize, &dwDownloaded)) {
+                    lxd::print("Error {} in WinHttpReadData.\n", GetLastError());
+                } else {
+                    result += pszOutBuffer;
+                }
+                // Free the memory allocated to the buffer.
+                delete[] pszOutBuffer;
+            }
+        } while(dwSize > 0);
+
+error:
+        lxd::print("Error {} has occurred.\n", GetLastError());
+    }
+
+    PostFormUrlencoded::~PostFormUrlencoded() {
+        // Close any open handles.
+        if(hRequest) WinHttpCloseHandle(hRequest);
+        if(hConnect) WinHttpCloseHandle(hConnect);
+        if(hSession) WinHttpCloseHandle(hSession);
+    }
+
     PostJson::PostJson(const wchar_t* host, const wchar_t* path, bool https,
                        std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs) {
         // Specify an HTTP server.

@@ -34,6 +34,20 @@ namespace lxd {
         void* hRequest = nullptr;
     };
 
+    class DLL_PUBLIC PostFormUrlencoded {
+    public:
+        PostFormUrlencoded(const wchar_t* host, unsigned short port, const wchar_t* path, bool https,
+                     std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs);
+        ~PostFormUrlencoded();
+    private:
+        unsigned long dwSize = 0;
+        unsigned long dwDownloaded = 0;
+        bool  bResults = false;
+        void* hSession = nullptr;
+        void* hConnect = nullptr;
+        void* hRequest = nullptr;
+    };
+
     class DLL_PUBLIC PostJson {
     public:
         PostJson(const wchar_t* host, const wchar_t* path, bool https,
