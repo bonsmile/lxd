@@ -8,7 +8,7 @@
 #include <cassert>
 
 namespace lxd {
-	HttpRequestSync::HttpRequestSync(const wchar_t* host, const wchar_t* path, std::string& result, bool https, const std::string& post) {
+	HttpRequestSync::HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post) {
         // Specify an HTTP server.
         HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
@@ -19,7 +19,7 @@ namespace lxd {
         // Connect
         if(hSession)
             hConnect = WinHttpConnect(hSession, host,
-                                      INTERNET_DEFAULT_HTTPS_PORT, 0);
+                                      port, 0);
 
         // Create an HTTP request handle.
         if(hConnect)
@@ -28,7 +28,7 @@ namespace lxd {
                                           path,
                                           NULL, WINHTTP_NO_REFERER,
                                           WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                          https ? WINHTTP_FLAG_SECURE : 0);
+                                          INTERNET_DEFAULT_HTTPS_PORT == port ? WINHTTP_FLAG_SECURE : 0);
 
         // Send a request.
         if(hRequest)
