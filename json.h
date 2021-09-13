@@ -1095,7 +1095,7 @@ static bool ksJson_ReadFromFile( ksJson * rootNode, const char * fileName, const
 
 static void ksJson_Printf( char ** bufferInOut, int * lengthInOut, int * offsetInOut, const int extraLength, const char * format, ... )
 {
-	if ( *offsetInOut + extraLength + 1 > *lengthInOut )
+	if ( *offsetInOut + extraLength + 1 + 1 > *lengthInOut )
 	{
 		int newLength = ( *lengthInOut <= 0 ) ? 128 : *lengthInOut * 2;
 		while ( newLength < *offsetInOut + extraLength + 1 )
