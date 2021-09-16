@@ -36,8 +36,8 @@ namespace lxd {
                                           WINHTTP_NO_ADDITIONAL_HEADERS,
                                           0,
                                           post.empty() ? WINHTTP_NO_REQUEST_DATA : const_cast<char*>(post.c_str()),
-                                          post.empty() ? 0 : post.size(),
-                                          post.empty() ? 0 : post.size(),
+                                          post.empty() ? 0 : static_cast<DWORD>(post.size()),
+                                          post.empty() ? 0 : static_cast<DWORD>(post.size()),
                                           NULL);
 
         // End the request.
@@ -155,7 +155,7 @@ namespace lxd {
         if(!WinHttpAddRequestHeaders(
             hRequest,
             header.c_str(),
-            header.size(),
+            static_cast<DWORD>(header.size()),
             WINHTTP_ADDREQ_FLAG_ADD
         )) goto error;
 
@@ -164,36 +164,36 @@ namespace lxd {
                                0,
                                WINHTTP_NO_REQUEST_DATA,
                                0,
-                               totalSize,
+                               static_cast<DWORD>(totalSize),
                                NULL)) goto error;
         DWORD dwBytesWritten = 0;
         size_t checkSize{};
         for(auto const& optional : optionals) {
             if(!WinHttpWriteData(hRequest, optional.c_str(),
-                                 optional.size(),
+                                 static_cast<DWORD>(optional.size()),
                                  &dwBytesWritten)) goto error;
             checkSize += optional.size();
             if(!WinHttpWriteData(hRequest, newLine,
-                                 strlen(newLine),
+                                 static_cast<DWORD>(strlen(newLine)),
                                  &dwBytesWritten)) goto error;
             checkSize += strlen(newLine);
         }
         for(auto const& additional : additionals) {
             if(!WinHttpWriteData(hRequest, additional.first.c_str(),
-                                 additional.first.size(),
+                                 static_cast<DWORD>(additional.first.size()),
                                  &dwBytesWritten)) goto error;
             checkSize += additional.first.size();
             if(!WinHttpWriteData(hRequest, additional.second.c_str(),
-                                 additional.second.size(),
+                                 static_cast<DWORD>(additional.second.size()),
                                  &dwBytesWritten)) goto error;
             checkSize += additional.second.size();
             if(!WinHttpWriteData(hRequest, newLine,
-                                 strlen(newLine),
+                                 static_cast<DWORD>(strlen(newLine)),
                                  &dwBytesWritten)) goto error;
             checkSize += strlen(newLine);
         }
         if(!WinHttpWriteData(hRequest, finalBody,
-                             strlen(finalBody),
+                             static_cast<DWORD>(strlen(finalBody)),
                              &dwBytesWritten)) goto error;
         checkSize += strlen(finalBody);
         assert(totalSize == checkSize);
@@ -282,13 +282,13 @@ error:
             content += fmt::format("&{}={}", urikey, urivalue);
         }
 
-
+        const wchar_t* contentType = L"Content-Type: application/x-www-form-urlencoded";
         if(!WinHttpSendRequest(hRequest,
-                               L"Content-Type: application/x-www-form-urlencoded",
-                               -1,
+                               contentType,
+                               static_cast<DWORD>(wcslen(contentType)),
                                content.data(),
-                               content.size(),
-                               content.size(),
+                               static_cast<DWORD>(content.size()),
+                               static_cast<DWORD>(content.size()),
                                NULL)) goto error;
 
         // End the request.
@@ -369,8 +369,8 @@ error:
                                contentType,
                                -1,
                                const_cast<char*>(json.c_str()),
-                               json.size(),
-                               json.size(),
+                               static_cast<DWORD>(json.size()),
+                               static_cast<DWORD>(json.size()),
                                NULL)) goto error;
 
         // End the request.
@@ -460,8 +460,8 @@ error:
                                header.data(),
                                -1,
                                const_cast<char*>(json.c_str()),
-                               json.size(),
-                               json.size(),
+                               static_cast<DWORD>(json.size()),
+                               static_cast<DWORD>(json.size()),
                                NULL)) goto error;
 
         // End the request.

@@ -40,8 +40,8 @@ add_library( lxd SHARED
 	${VERSION_RC}
 )
 
-target_compile_options( lxd PRIVATE "/utf-8" "/MP" )
+target_compile_options( lxd PRIVATE "/utf-8" "/MP" "/wd4251" "/WX")
 target_compile_definitions( lxd PUBLIC -DBUILDING_DLL )
-target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE )
+target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
 target_compile_features( lxd PRIVATE cxx_std_17 )
 target_link_libraries( lxd PUBLIC fmt::fmt-header-only Winhttp Bcrypt Pathcch)

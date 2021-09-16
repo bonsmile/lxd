@@ -377,9 +377,9 @@ bool AsyncFile::IsAsyncIOComplete(bool bFlushBuffers) {
     }
 
     int nTotalNumOfBytesTrans = 0;
-    int nOvpBufferCount = m_pOvpBufArray.size();
+    size_t nOvpBufferCount = m_pOvpBufArray.size();
 
-    for(int nIdx = 0; nIdx < nOvpBufferCount; ++nIdx)     {
+    for(size_t nIdx = 0; nIdx < nOvpBufferCount; ++nIdx)     {
         LPOVERLAPPED lpOverlapped = reinterpret_cast<LPOVERLAPPED>(m_pOvpBufArray[nIdx]);
         DWORD dwNumberOfBytesTransferred = 0;
         bool bRet = GetOverlappedResult(m_hAsyncFile, lpOverlapped, &dwNumberOfBytesTransferred, true);
@@ -424,8 +424,8 @@ bFlushBuffers - Whether to flush the file buffers or not.
 void AsyncFile::Cleanup(bool bFlushBuffers) {
     if(true == m_bCleanupDone)
         return;
-    int nOvpBufCount = m_pOvpBufArray.size();
-    for(int nIdx = 0; nIdx < nOvpBufCount; ++nIdx)     {
+    size_t nOvpBufCount = m_pOvpBufArray.size();
+    for(size_t nIdx = 0; nIdx < nOvpBufCount; ++nIdx)     {
         LPOVERLAPPEDEX pOverlapped = reinterpret_cast<LPOVERLAPPEDEX>(m_pOvpBufArray[nIdx]);
         delete pOverlapped;
     }
@@ -596,7 +596,7 @@ void AsyncFile::OutputFormattedErrorString(const wchar_t* ptcMsg, DWORD dwErrorC
                                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                                       reinterpret_cast<LPTSTR>(&lptszMsgBuf), 0, 0)))     {
         const wchar_t* INFIX = L"-->";
-        dwBufLen += wcslen(ptcMsg) + wcslen(INFIX) + 1;
+        dwBufLen += static_cast<DWORD>(wcslen(ptcMsg) + wcslen(INFIX) + 1);
         wchar_t* ptcErrMsg = new wchar_t[dwBufLen];
         ZeroMemory(ptcErrMsg, sizeof(wchar_t) * dwBufLen);
         swprintf_s(ptcErrMsg, dwBufLen, L"%s%s%s", ptcMsg, INFIX, lptszMsgBuf);

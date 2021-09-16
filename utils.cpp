@@ -65,7 +65,7 @@ namespace lxd {
                                     0,
                                     REG_SZ,
                                     reinterpret_cast<const BYTE*>(value.data()),
-                                    value.size() * sizeof(wchar_t));
+                                    static_cast<ULONG>(value.size() * sizeof(wchar_t)));
         assert(status == ERROR_SUCCESS);
         RegCloseKey(HKEY_CURRENT_USER);
     }

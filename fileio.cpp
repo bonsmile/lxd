@@ -66,7 +66,7 @@ namespace lxd {
 			return false;
 		}
 		// write
-		if(!::WriteFile(handle, buffer, bufferSize, nullptr, nullptr)) {
+		if(!::WriteFile(handle, buffer, static_cast<DWORD>(bufferSize), nullptr, nullptr)) {
 			CloseHandle(handle);
 			return false;
 		}
@@ -89,7 +89,7 @@ namespace lxd {
 		// read
 		std::string buffer;
 		buffer.resize(size.QuadPart);
-		if(!::ReadFile(handle, buffer.data(), buffer.size(), nullptr, nullptr)) {
+		if(!::ReadFile(handle, buffer.data(), static_cast<DWORD>(buffer.size()), nullptr, nullptr)) {
 			CloseHandle(handle);
 			return {};
 		}
@@ -279,7 +279,7 @@ namespace lxd {
 
 	 bool File::write(void* buffer, size_t bufferSize) {
 		 DWORD bytesWritten = 0;
-		 if (::WriteFile(_handle, buffer, bufferSize, &bytesWritten, nullptr)) {
+		 if (::WriteFile(_handle, buffer, static_cast<DWORD>(bufferSize), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;
 			return true;
 		 }
@@ -289,7 +289,6 @@ namespace lxd {
 	 struct tm File::getLastWriteTime() {
 		 FILETIME ftCreate, ftAccess, ftWrite;
 		 SYSTEMTIME stUTC, stLocal;
-		 DWORD dwRet;
 
 		 // Retrieve the file times for the file.
 		 bool ok = GetFileTime(_handle, &ftCreate, &ftAccess, &ftWrite);

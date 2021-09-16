@@ -72,7 +72,7 @@ namespace lxd {
             pbHashObject,
             cbHashObject,
             (PBYTE)key,
-            keySize,
+            static_cast<ULONG>(keySize),
             0))) {
             lxd::print(L"**** Error {0:x} returned by BCryptCreateHash\n", status);
             goto Cleanup;
@@ -82,7 +82,7 @@ namespace lxd {
         if(!NT_SUCCESS(status = BCryptHashData(
             hHash,
             (PBYTE)message,
-            msgSize,
+            static_cast<ULONG>(msgSize),
             0))) {
             lxd::print(L"**** Error {0:x} returned by BCryptHashData\n", status);
             goto Cleanup;
