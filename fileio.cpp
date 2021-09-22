@@ -6,8 +6,8 @@
 #include <cassert>
 
 namespace lxd {
-	bool FileExists(std::wstring_view path) {
-		return GetFileAttributesW(path.data()) != INVALID_FILE_ATTRIBUTES;
+	bool FileExists(const wchar_t* path) {
+		return GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES;
 	}
 
 	bool openModeCanCreate(int openMode) {
@@ -16,7 +16,7 @@ namespace lxd {
 		return (openMode & OpenMode::WriteOnly) && !(openMode & OpenMode::ExistingOnly);
 	}
 
-	void* OpenFile(std::wstring_view path, int openMode) {
+	void* OpenFile(const wchar_t* path, int openMode) {
 		// All files are opened in share mode (both read and write).
 		DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 		int accessRights = 0;
@@ -36,7 +36,7 @@ namespace lxd {
 		param.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
 		param.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
 		param.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-		HANDLE hFile = CreateFile2(path.data(), accessRights, shareMode, creationDisp, &param);
+		HANDLE hFile = CreateFile2(path, accessRights, shareMode, creationDisp, &param);
 		// Append or Truncate
 		if(openMode & OpenMode::Append) {
 			LONG lFileHigh = 0;
@@ -53,7 +53,7 @@ namespace lxd {
 		return CloseHandle(handle);
 	}
 
-	bool WriteFile(std::wstring_view path, char const* buffer, size_t bufferSize) {
+	bool WriteFile(const wchar_t* path, char const* buffer, size_t bufferSize) {
 		// open the file
 		auto handle = OpenFile(path, OpenMode::WriteOnly);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -74,7 +74,7 @@ namespace lxd {
 		return true;
 	}
 
-	std::string ReadFile(std::wstring_view path) {
+	std::string ReadFile(const wchar_t* path) {
 		// open the file
 		auto handle = OpenFile(path, OpenMode::ReadOnly | OpenMode::ExistingOnly);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -98,15 +98,15 @@ namespace lxd {
 		return buffer;
 	}
 
-	bool RemoveFile(std::wstring_view path) {
-		return DeleteFile(path.data()) != 0;
+	bool RemoveFile(const wchar_t* path) {
+		return DeleteFile(path) != 0;
 	}
 
-	bool CreateDir(std::wstring_view path) {
-		return ::CreateDirectoryW(path.data(), nullptr);
+	bool CreateDir(const wchar_t* path) {
+		return ::CreateDirectoryW(path, nullptr);
 	}
 
-	bool CreateDirRecursive(std::wstring_view path) {
+	bool CreateDirRecursive(const std::wstring& path) {
 		if (DirExists(path)) {
 			return true;
 		}
@@ -116,11 +116,11 @@ namespace lxd {
 			return false;
 		}
 
-		if (!CreateDirRecursive(std::wstring(path.data(), i))) {
+		if (!CreateDirRecursive(path.substr(0, i))) {
 			return false;
 		}
 
-		return CreateDir(path);
+		return CreateDir(path.data());
 	}
 
 	int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories) {
@@ -255,8 +255,13 @@ namespace lxd {
 		 return buffer;
 	 }
 
-	 File::File(std::wstring_view path, int mode) {
-		 _handle = OpenFile(path, mode);
+	 File::File(const std::wstring& path, int mode) {
+		 assert(path.size() > 3); // D:\\1
+		 auto offset = path.find_last_of(L"\\");
+		 assert(offset != std::wstring_view::npos);
+		 auto middleDir = path.substr(0, offset);
+		 CreateDirRecursive(middleDir);
+		 _handle = OpenFile(path.data(), mode);
 		 assert(INVALID_HANDLE_VALUE != _handle);
 		 // get file size
 		 bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
