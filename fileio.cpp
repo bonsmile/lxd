@@ -55,7 +55,7 @@ namespace lxd {
 
 	bool WriteFile(const wchar_t* path, char const* buffer, size_t bufferSize) {
 		// open the file
-		auto handle = OpenFile(path, OpenMode::WriteOnly);
+		auto handle = OpenFile(path, OpenMode::WriteOnly | OpenMode::Truncate);
 		if(INVALID_HANDLE_VALUE == handle) {
 			return false;
 		}
