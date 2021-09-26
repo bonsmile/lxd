@@ -258,9 +258,10 @@ namespace lxd {
 	 File::File(const std::wstring& path, int mode) {
 		 assert(path.size() > 3); // D:\\1
 		 auto offset = path.find_last_of(L"\\");
-		 assert(offset != std::wstring_view::npos);
-		 auto middleDir = path.substr(0, offset);
-		 CreateDirRecursive(middleDir);
+		 if(offset != std::wstring::npos) {
+			 auto middleDir = path.substr(0, offset);
+			 CreateDirRecursive(middleDir);
+		 }
 		 _handle = OpenFile(path.data(), mode);
 		 assert(INVALID_HANDLE_VALUE != _handle);
 		 // get file size
