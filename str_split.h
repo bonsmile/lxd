@@ -154,7 +154,7 @@ class DLL_PUBLIC ByString {
 //   using absl::ByChar;
 //   std::vector<std::string> v = absl::StrSplit("a-b", ByChar('-'));
 //
-class ByChar {
+class DLL_PUBLIC ByChar {
  public:
   explicit ByChar(char c) : c_(c) {}
   std::string_view Find(std::string_view text, size_t pos) const;
@@ -180,7 +180,7 @@ class ByChar {
 // If `ByAnyChar` is given the empty string, it behaves exactly like
 // `ByString` and matches each individual character in the input string.
 //
-class ByAnyChar {
+class DLL_PUBLIC ByAnyChar {
  public:
   explicit ByAnyChar(std::string_view sp);
   std::string_view Find(std::string_view text, size_t pos) const;
@@ -211,7 +211,7 @@ class ByAnyChar {
 //   std::vector<std::string> v = absl::StrSplit("12345", ByLength(2));
 //
 //   // v[0] == "12", v[1] == "34", v[2] == "5"
-class ByLength {
+class DLL_PUBLIC ByLength {
  public:
   explicit ByLength(ptrdiff_t length);
   std::string_view Find(std::string_view text, size_t pos) const;

@@ -168,7 +168,7 @@ inline char ascii_tolower(unsigned char c) {
 // Converts the characters in `s` to lowercase, changing the contents of `s`.
 void AsciiStrToLower(std::string* s);
 
-// Creates a lowercase string from a given absl::string_view.
+// Creates a lowercase string from a given std::string_view.
 [[nodiscard]] inline std::string AsciiStrToLower(std::string_view s) {
   std::string result(s);
   absl::AsciiStrToLower(&result);
@@ -186,14 +186,14 @@ inline char ascii_toupper(unsigned char c) {
 // Converts the characters in `s` to uppercase, changing the contents of `s`.
 void AsciiStrToUpper(std::string* s);
 
-// Creates an uppercase string from a given absl::string_view.
+// Creates an uppercase string from a given std::string_view.
 [[nodiscard]] inline std::string AsciiStrToUpper(std::string_view s) {
   std::string result(s);
   absl::AsciiStrToUpper(&result);
   return result;
 }
 
-// Returns absl::string_view with whitespace stripped from the beginning of the
+// Returns std::string_view with whitespace stripped from the beginning of the
 // given string_view.
 [[nodiscard]] inline std::string_view StripLeadingAsciiWhitespace(
     std::string_view str) {
@@ -207,7 +207,7 @@ inline void StripLeadingAsciiWhitespace(std::string* str) {
   str->erase(str->begin(), it);
 }
 
-// Returns absl::string_view with whitespace stripped from the end of the given
+// Returns std::string_view with whitespace stripped from the end of the given
 // string_view.
 [[nodiscard]] inline std::string_view StripTrailingAsciiWhitespace(
     std::string_view str) {
@@ -221,7 +221,7 @@ inline void StripTrailingAsciiWhitespace(std::string* str) {
   str->erase(str->rend() - it);
 }
 
-// Returns absl::string_view with whitespace stripped from both ends of the
+// Returns std::string_view with whitespace stripped from both ends of the
 // given string_view.
 [[nodiscard]] inline std::string_view StripAsciiWhitespace(
     std::string_view str) {
