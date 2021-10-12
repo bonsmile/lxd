@@ -9,8 +9,25 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in
 
 message(CMAKE_PREFIX_PATH:${CMAKE_PREFIX_PATH})
 
+set(SOURCE_STRINGS
+	strings/ascii.h
+	strings/ascii.cc
+	strings/match.h
+	strings/match.cc
+	strings/numbers.h
+	strings/numbers.cc
+	strings/str_split.h
+	strings/str_split.cc
+	strings/str_cat.h
+	strings/str_cat.cc
+	strings/str_replace.h
+	strings/str_replace.cc
+)
+source_group(strings FILES ${SOURCE_STRINGS})
+
 add_library( lxd SHARED
 	defines.h
+	${SOURCE_STRINGS}
 	debug.h
 	debug.cpp
 	encoding.h
@@ -28,10 +45,6 @@ add_library( lxd SHARED
 	json.h
 	threading.h
 	nanoseconds.h
-	ascii.h
-	ascii.cc
-	str_split.h
-	str_split.cc
 	str.h
 	str.cpp
 	utils.h
@@ -47,5 +60,5 @@ add_library( lxd SHARED
 target_compile_options( lxd PRIVATE "/utf-8" "/MP" "/wd4251" "/WX")
 target_compile_definitions( lxd PRIVATE -DBUILDING_DLL )
 target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
-target_compile_features( lxd PRIVATE cxx_std_17 )
+target_compile_features( lxd PRIVATE cxx_std_20 )
 target_link_libraries( lxd PUBLIC fmt::fmt-header-only Winhttp Bcrypt Pathcch)
