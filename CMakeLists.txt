@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.16.0 )
 
-project(lxd VERSION 1.1.0.0)
+project(lxd VERSION 2.0.0.0)
 
 set(VERSION_RC ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in

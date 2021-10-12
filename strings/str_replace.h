@@ -38,6 +38,7 @@
 #ifndef ABSL_STRINGS_STR_REPLACE_H_
 #define ABSL_STRINGS_STR_REPLACE_H_
 
+#include "../defines.h"
 #include <string>
 #include <utility>
 #include <vector>
@@ -65,7 +66,7 @@ namespace absl {
 //        {"$who", "Bob"},
 //        {"#Noun", "Apples"}});
 //   EXPECT_EQ("Bob bought 5 Apples. Thanks Bob!", s);
-[[nodiscard]] std::string StrReplaceAll(
+DLL_PUBLIC [[nodiscard]] std::string StrReplaceAll(
     std::string_view s,
     std::initializer_list<std::pair<std::string_view, std::string_view>>
         replacements);
@@ -110,7 +111,7 @@ std::string StrReplaceAll(std::string_view s,
 //                               {"#Noun", "Apples"}}, &s);
 //  EXPECT_EQ(count, 4);
 //  EXPECT_EQ("Bob bought 5 Apples. Thanks Bob!", s);
-int StrReplaceAll(
+DLL_PUBLIC int StrReplaceAll(
     std::initializer_list<std::pair<std::string_view, std::string_view>>
         replacements,
     std::string* target);
@@ -184,7 +185,7 @@ std::vector<ViableSubstitution> FindSubstitutions(
   return subs;
 }
 
-int ApplySubstitutions(std::string_view s,
+DLL_PUBLIC int ApplySubstitutions(std::string_view s,
                        std::vector<ViableSubstitution>* subs_ptr,
                        std::string* result_ptr);
 

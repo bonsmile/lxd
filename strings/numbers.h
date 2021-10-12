@@ -146,15 +146,15 @@ static const int kSixDigitsToBufferSize = 16;
 // outside the range 0.0001-999999 are output using scientific notation
 // (1.23456e+06). This routine is heavily optimized.
 // Required buffer size is `kSixDigitsToBufferSize`.
-size_t SixDigitsToBuffer(double d, char* buffer);
+DLL_PUBLIC size_t SixDigitsToBuffer(double d, char* buffer);
 
 // These functions are intended for speed. All functions take an output buffer
 // as an argument and return a pointer to the last byte they wrote, which is the
 // terminating '\0'. At most `kFastToBufferSize` bytes are written.
-char* FastIntToBuffer(int32_t, char*);
-char* FastIntToBuffer(uint32_t, char*);
-char* FastIntToBuffer(int64_t, char*);
-char* FastIntToBuffer(uint64_t, char*);
+DLL_PUBLIC char* FastIntToBuffer(int32_t, char*);
+DLL_PUBLIC char* FastIntToBuffer(uint32_t, char*);
+DLL_PUBLIC char* FastIntToBuffer(int64_t, char*);
+DLL_PUBLIC char* FastIntToBuffer(uint64_t, char*);
 
 // For enums and integer types that are not an exact match for the types above,
 // use templates to call the appropriate one of the four overloads above.

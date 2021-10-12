@@ -210,7 +210,7 @@ struct Dec {
 // `StrAppend()`, providing efficient conversion of numeric, boolean, and
 // hexadecimal values (through the `Hex` type) into strings.
 
-class AlphaNum {
+class DLL_PUBLIC AlphaNum {
  public:
   // No bool ctor -- bools convert to an integral type.
   // A bool ctor would also convert incoming pointers (bletch).
@@ -320,8 +320,8 @@ class AlphaNum {
 namespace strings_internal {
 
 // Do not call directly - this is not part of the public API.
-std::string CatPieces(std::initializer_list<std::string_view> pieces);
-void AppendPieces(std::string* dest,
+DLL_PUBLIC std::string CatPieces(std::initializer_list<std::string_view> pieces);
+DLL_PUBLIC void AppendPieces(std::string* dest,
                   std::initializer_list<std::string_view> pieces);
 
 }  // namespace strings_internal
@@ -332,10 +332,10 @@ void AppendPieces(std::string* dest,
   return std::string(a.data(), a.size());
 }
 
-[[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b);
-[[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b);
+DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
                                         const AlphaNum& c);
-[[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
                                         const AlphaNum& c, const AlphaNum& d);
 
 // Support 5 or more arguments
@@ -376,11 +376,11 @@ template <typename... AV>
 //   StrAppend(&s, p);
 
 inline void StrAppend(std::string*) {}
-void StrAppend(std::string* dest, const AlphaNum& a);
-void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b);
-void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC void StrAppend(std::string* dest, const AlphaNum& a);
+DLL_PUBLIC void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b);
+DLL_PUBLIC void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b,
                const AlphaNum& c);
-void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC void StrAppend(std::string* dest, const AlphaNum& a, const AlphaNum& b,
                const AlphaNum& c, const AlphaNum& d);
 
 // Support 5 or more arguments

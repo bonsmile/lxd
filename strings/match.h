@@ -33,6 +33,7 @@
 #ifndef ABSL_STRINGS_MATCH_H_
 #define ABSL_STRINGS_MATCH_H_
 
+#include "../defines.h"
 #include <cstring>
 #include <string_view>
 
@@ -76,21 +77,21 @@ inline bool EndsWith(std::string_view text,
 //
 // Returns whether given ASCII strings `piece1` and `piece2` are equal, ignoring
 // case in the comparison.
-bool EqualsIgnoreCase(std::string_view piece1,
+DLL_PUBLIC bool EqualsIgnoreCase(std::string_view piece1,
                       std::string_view piece2) noexcept;
 
 // StartsWithIgnoreCase()
 //
 // Returns whether a given ASCII string `text` starts with `prefix`,
 // ignoring case in the comparison.
-bool StartsWithIgnoreCase(std::string_view text,
+DLL_PUBLIC bool StartsWithIgnoreCase(std::string_view text,
                           std::string_view prefix) noexcept;
 
 // EndsWithIgnoreCase()
 //
 // Returns whether a given ASCII string `text` ends with `suffix`, ignoring
 // case in the comparison.
-bool EndsWithIgnoreCase(std::string_view text,
+DLL_PUBLIC bool EndsWithIgnoreCase(std::string_view text,
                         std::string_view suffix) noexcept;
 
 //ABSL_NAMESPACE_END
