@@ -94,6 +94,13 @@ namespace lxd {
         std::vector<std::pair<std::string, std::string>> additionals;
         std::wstring header(L"Content-Type:multipart/form-data; boundary=1SUB64X86GK5");
         std::vector<std::string> optionals;
+        DWORD dwBytesWritten = 0;
+        size_t checkSize{};
+        const char* boundary = "--1SUB64X86GK5\r\n";
+        const char* disposition = "Content-Disposition: form-data; ";
+        const char* newLine = "\r\n";
+        const char* finalBody = "--1SUB64X86GK5--\r\n";
+        size_t totalSize{};
         // Specify an HTTP server.
         HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
@@ -126,11 +133,6 @@ namespace lxd {
             lxd::Base64_Encode(base64.data(), reinterpret_cast<const unsigned char*>(idAndSecret.data()), idAndSecret.size());
             header = fmt::format(L"Authorization: Basic {}\r\n{}", lxd::utf8_decode(base64), header);
         }
-        const char* boundary = "--1SUB64X86GK5\r\n";
-        const char* disposition = "Content-Disposition: form-data; ";
-        const char* newLine = "\r\n";
-        const char* finalBody = "--1SUB64X86GK5--\r\n";
-        size_t totalSize{};
         // optional key/values
         for(auto const& pair : pairs) {
             auto str = fmt::format("{}{}name=\"{}\"\r\n\r\n{}", boundary, disposition, pair.first, pair.second);
@@ -166,8 +168,7 @@ namespace lxd {
                                0,
                                static_cast<DWORD>(totalSize),
                                NULL)) goto error;
-        DWORD dwBytesWritten = 0;
-        size_t checkSize{};
+        
         for(auto const& optional : optionals) {
             if(!WinHttpWriteData(hRequest, optional.c_str(),
                                  static_cast<DWORD>(optional.size()),
@@ -242,7 +243,9 @@ error:
 
     PostFormUrlencoded::PostFormUrlencoded(const wchar_t* host, unsigned short port, const wchar_t* path, bool https,
                                std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs) {
+        const wchar_t* contentType = L"Content-Type: application/x-www-form-urlencoded";
         std::string content;
+        
         // Specify an HTTP server.
         HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
@@ -282,7 +285,6 @@ error:
             content += fmt::format("&{}={}", urikey, urivalue);
         }
 
-        const wchar_t* contentType = L"Content-Type: application/x-www-form-urlencoded";
         if(!WinHttpSendRequest(hRequest,
                                contentType,
                                static_cast<DWORD>(wcslen(contentType)),
