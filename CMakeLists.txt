@@ -16,8 +16,10 @@ set(SOURCE_STRINGS
 	strings/match.cc
 	strings/numbers.h
 	strings/numbers.cc
+	strings/str_split_internal.h
 	strings/str_split.h
 	strings/str_split.cc
+	strings/resize_uninitialized.h
 	strings/str_cat.h
 	strings/str_cat.cc
 	strings/str_replace.h
