@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fmt/xchar.h>
+#include <fmt/ostream.h>
 #include <Windows.h>
 #include <debugapi.h>
 //#if defined(_DEBUG)
