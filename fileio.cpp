@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <fileapi.h>
 #include <pathcch.h>
-#include <fmt/xchar.h>
+#include <fmt/format.h>
 #include <cassert>
 
 namespace lxd {
@@ -283,7 +283,7 @@ namespace lxd {
 		 return ::ReadFile(_handle, buffer, nNumberOfBytesToRead, lpNumberOfBytesRead, nullptr);
 	 }
 
-	 bool File::write(void* buffer, size_t bufferSize) {
+	 bool File::write(const void* buffer, size_t bufferSize) {
 		 DWORD bytesWritten = 0;
 		 if (::WriteFile(_handle, buffer, static_cast<DWORD>(bufferSize), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;

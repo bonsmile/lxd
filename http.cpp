@@ -4,7 +4,7 @@
 #include "debug.h"
 #include "encoding.h"
 #include "base64.h"
-#include <fmt/xchar.h>
+//#include <fmt/xchar.h>
 #include <cassert>
 
 namespace lxd {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/xchar.h>
+//#include <fmt/xchar.h>
 #include <fmt/ostream.h>
 #include <Windows.h>
 #include <debugapi.h>
@@ -10,7 +10,7 @@
 //#endif
 namespace lxd {
 	template <typename... Args>
-	DLL_PUBLIC void print(char const* format_str, Args&&... args) {
+	DLL_PUBLIC void print(const char* format_str, Args&&... args) {
 		std::string output = fmt::format(format_str, std::forward<Args>(args)...);
 		OutputDebugStringA(output.c_str());
 		//DWORD offsetHigh;
@@ -18,7 +18,7 @@ namespace lxd {
 	}
 
 	template <typename... Args>
-	DLL_PUBLIC void print(wchar_t const* format_str, Args&&... args) {
+	DLL_PUBLIC void print(const wchar_t* format_str, Args&&... args) {
 		std::wstring output = fmt::format(format_str, std::forward<Args>(args)...);
 		OutputDebugStringW(output.c_str());
 		//auto utf8 = utf8_encode(output);

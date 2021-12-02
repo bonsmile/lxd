@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <atlstr.h>
 #include <memory>
-#include <fmt/xchar.h>
+#include <fmt/format.h>
 
 namespace lxd {
 
