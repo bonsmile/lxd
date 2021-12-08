@@ -10,15 +10,16 @@ namespace lxd {
         wchar_t filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
         auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
-        return std::wstring(filename, size);
+        return filename;
 	}
 
 	std::wstring GetDirOfExe() {
         wchar_t filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
         auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
-        PathCchRemoveFileSpec(filename, size);
-        return std::wstring(filename);
+        auto ok = PathCchRemoveFileSpec(filename, size);
+        assert(ok == S_OK);
+        return filename;
 	}
 
     std::wstring GetExeName() {
