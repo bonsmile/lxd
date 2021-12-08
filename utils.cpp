@@ -1,28 +1,24 @@
 ﻿#include "utils.h"
 #include <cassert>
 #include <Windows.h> // For Win32 API
+#include <Psapi.h>
 #include <shlobj_core.h>
+#include <PathCch.h>
 
 namespace lxd {
 	std::wstring GetPathOfExe() {
-        // Get filename with full path for current process EXE
         wchar_t filename[MAX_PATH];
-        DWORD result = ::GetModuleFileName(
-            nullptr,    // retrieve path of current process .EXE
-            filename,
-            _countof(filename)
-        );
-        assert(result);
-
-        return filename;
+        HANDLE process = GetCurrentProcess();
+        auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
+        return std::wstring(filename, size);
 	}
 
 	std::wstring GetDirOfExe() {
-        auto exe = GetPathOfExe();
-        auto offset = exe.rfind('\\');
-        assert(offset);
-
-        return exe.substr(0, offset);
+        wchar_t filename[MAX_PATH];
+        HANDLE process = GetCurrentProcess();
+        auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
+        PathCchRemoveFileSpec(filename, size);
+        return std::wstring(filename);
 	}
 
     std::wstring GetExeName() {
