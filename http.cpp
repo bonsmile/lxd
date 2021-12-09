@@ -6,6 +6,7 @@
 #include "base64.h"
 //#include <fmt/xchar.h>
 #include <cassert>
+#include <fmt/xchar.h>
 
 namespace lxd {
 	HttpRequestSync::HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post) {

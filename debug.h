@@ -7,10 +7,13 @@
 //#if defined(_DEBUG)
 #include "AsyncFile.h"
 #include "encoding.h"
+#include <fmt/xchar.h>
+#include <fmt/format.h>
+
 //#endif
 namespace lxd {
 	template <typename... Args>
-	DLL_PUBLIC void print(const char* format_str, Args&&... args) {
+	DLL_PUBLIC void print(const fmt::format_string<Args...>& format_str, Args&&... args) {
 		std::string output = fmt::format(format_str, std::forward<Args>(args)...);
 		OutputDebugStringA(output.c_str());
 		//DWORD offsetHigh;

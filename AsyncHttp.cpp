@@ -3,6 +3,7 @@
 #include <atlstr.h>
 #include <memory>
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 
 namespace lxd {
 

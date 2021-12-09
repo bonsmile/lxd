@@ -4,6 +4,7 @@
 #include <pathcch.h>
 #include <fmt/format.h>
 #include <cassert>
+#include <fmt/xchar.h>
 
 namespace lxd {
 	bool FileExists(const wchar_t* path) {
