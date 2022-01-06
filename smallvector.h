@@ -54,6 +54,7 @@ public:
     bool operator>=(SmallVectorIter const&sibling) const { return off >= sibling.off; }
     T& operator[](int index) const { return *(*this + index); }
     T& operator*() const { return buf[off]; }
+    T* operator->() noexcept { return buf; }
 };
 
 template<typename T, size_t const N>
@@ -63,11 +64,32 @@ public:
     SmallVector() : _size(0), _capacity(N), _heapData(_stackData.data())
     {
     }
+    ~SmallVector() {
+        this->destroy_range(this->begin(), this->end());
+        if(!isSmall())
+            delete[] _heapData;
+    }
     T &operator[](size_t n) { return _heapData[n]; }
     void push_back(T const &e);
-
+    void clear() {
+        this->destroy_range(this->begin(), this->end());
+        if(!isSmall()) {
+            delete[] _heapData;
+            _heapData = _stackData.data();
+        }
+        this->_size = 0;
+        this->_capacity = _stackData.size();
+    }
+    bool isSmall() const { return _heapData == _stackData.data(); }
     size_t size() const {return _size;}
     size_t capacity() const {return _capacity;}
+private:
+    static void destroy_range(SmallVectorIter<T, N> S, SmallVectorIter<T, N> E) {
+        while(S != E) {
+            --E;
+            E->~T();
+        }
+    }
 private:
     std::array<T, N> _stackData;
     size_t _size;
@@ -101,14 +123,13 @@ void SmallVector<T,N>::push_back(T const &e)
         _capacity = static_cast<size_t>(_capacity * 1.5);
         auto newHeap = new T[_capacity];
         std::copy(_heapData, _heapData + _size, newHeap);
-        if (_heapData != _stackData.data()) {
+        if (!isSmall()) {
             delete []_heapData;
         }
         _heapData = newHeap;
     }
     _heapData[_size++] = e;
 };
-
 
 }
 
