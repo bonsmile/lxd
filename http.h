@@ -1,7 +1,7 @@
 #pragma once
 
 #include "defines.h"
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace lxd {
@@ -21,8 +21,8 @@ namespace lxd {
     class DLL_PUBLIC PostFormdata {
     public:
         PostFormdata(const wchar_t* host, const wchar_t* path, bool https,
-                     std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs,
-                     const std::vector<std::pair<std::string, std::string>>& files = {},
+                     std::string& result, const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
+                     const std::vector<std::pair<std::string_view, std::string_view>>& files = {},
                      const char* authID = nullptr, const char* authSecret = nullptr);
         ~PostFormdata();
     private:

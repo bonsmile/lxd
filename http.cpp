@@ -88,11 +88,11 @@ namespace lxd {
     }
 
     PostFormdata::PostFormdata(const wchar_t* host, const wchar_t* path, bool https,
-                               std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs,
-                               const std::vector<std::pair<std::string, std::string>>& files,
+                               std::string& result, const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
+                               const std::vector<std::pair<std::string_view, std::string_view>>& files,
                                const char* authID, const char* authSecret) {
         // Fix `skipped by goto` error
-        std::vector<std::pair<std::string, std::string>> additionals;
+        std::vector<std::pair<std::string_view, std::string_view>> additionals;
         std::wstring header(L"Content-Type:multipart/form-data; boundary=1SUB64X86GK5");
         std::vector<std::string> optionals;
         DWORD dwBytesWritten = 0;
@@ -181,11 +181,11 @@ namespace lxd {
             checkSize += strlen(newLine);
         }
         for(auto const& additional : additionals) {
-            if(!WinHttpWriteData(hRequest, additional.first.c_str(),
+            if(!WinHttpWriteData(hRequest, additional.first.data(),
                                  static_cast<DWORD>(additional.first.size()),
                                  &dwBytesWritten)) goto error;
             checkSize += additional.first.size();
-            if(!WinHttpWriteData(hRequest, additional.second.c_str(),
+            if(!WinHttpWriteData(hRequest, additional.second.data(),
                                  static_cast<DWORD>(additional.second.size()),
                                  &dwBytesWritten)) goto error;
             checkSize += additional.second.size();
