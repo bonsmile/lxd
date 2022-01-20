@@ -56,6 +56,7 @@ add_library( lxd SHARED
 	AsyncHttp.h
 	AsyncHttp.cpp
 	WinHTTPWrappers.h
+	iterator_range.h
 	smallvector.h
 	smallvector.cpp
 	${VERSION_RC}
