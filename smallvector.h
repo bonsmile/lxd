@@ -58,6 +58,7 @@ public:
 };
 
 template<typename T, size_t const N>
+    requires std::is_standard_layout<T>::value
 class SmallVector
 {
 public:
@@ -65,14 +66,12 @@ public:
     {
     }
     ~SmallVector() {
-        this->destroy_range(this->begin(), this->end());
         if(!isSmall())
             delete[] _heapData;
     }
     T &operator[](size_t n) { return _heapData[n]; }
     void push_back(T const &e);
     void clear() {
-        this->destroy_range(this->begin(), this->end());
         if(!isSmall()) {
             delete[] _heapData;
             _heapData = _stackData.data();
@@ -83,13 +82,6 @@ public:
     bool isSmall() const { return _heapData == _stackData.data(); }
     size_t size() const {return _size;}
     size_t capacity() const {return _capacity;}
-private:
-    static void destroy_range(SmallVectorIter<T, N> S, SmallVectorIter<T, N> E) {
-        while(S != E) {
-            --E;
-            E->~T();
-        }
-    }
 private:
     std::array<T, N> _stackData;
     size_t _size;
@@ -117,6 +109,7 @@ public:
 };
 
 template<typename T, size_t const N>
+    requires std::is_standard_layout<T>::value
 void SmallVector<T,N>::push_back(T const &e)
 {
     if (_size == _capacity) {
