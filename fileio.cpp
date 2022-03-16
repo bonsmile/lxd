@@ -293,6 +293,15 @@ namespace lxd {
 		return false;
 	 }
 
+	 bool File::write(std::string_view buffer) {
+		 DWORD bytesWritten = 0;
+		 if(::WriteFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesWritten, nullptr)) {
+			 _size += bytesWritten;
+			 return true;
+		 }
+		 return false;
+	 }
+
 	 struct tm File::getLastWriteTime() {
 		 FILETIME ftCreate, ftAccess, ftWrite;
 		 SYSTEMTIME stUTC, stLocal;

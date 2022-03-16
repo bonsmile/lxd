@@ -49,6 +49,7 @@ namespace lxd {
 		bool seek(long long distance, SeekMode mode, long long* newPtr = nullptr);
 		bool read(void* buffer, unsigned long nNumberOfBytesToRead, unsigned long* lpNumberOfBytesRead = nullptr);
 		bool write(const void* buffer, size_t size);
+		bool write(std::string_view buffer);
 		struct tm getLastWriteTime();
 		bool isOlderThan(struct tm);
 	private:
