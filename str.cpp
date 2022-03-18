@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <algorithm>
 #include <cctype>
+#include <regex>
+#include <charconv>
 
 namespace lxd {
 	void Upper(std::string& str) {
@@ -36,5 +38,19 @@ namespace lxd {
 		}
 
 		return output;
+	}
+
+	std::vector<float> ExtractNumbersFromString(std::string_view sv) {
+		std::regex reg(R"((-?(([1-9]\d*\.\d*)|(0\.\d*[1-9]\d*)))|(-?[1-9]\d*))");
+		const std::cregex_iterator end;
+		std::vector<float> result;
+		for(std::cregex_iterator iter(sv.data(), sv.data() + sv.size(), reg); iter != end; ++iter) {
+			float value;
+			std::string match = iter->str();
+			if(auto [p, ec] = std::from_chars(match.data(), match.data() + match.size(), value); ec == std::errc{}) {
+				result.push_back(value);
+			}
+		}
+		return result;
 	}
 }
