@@ -8,21 +8,21 @@
 
 namespace lxd {
 	void Upper(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), std::toupper);
+		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
 	}
 	void Upper(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), std::toupper);
+		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
 	}
 	void Lower(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), std::tolower);
+		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::tolower(c); });
 	}
 	void Lower(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), std::tolower);
+		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::tolower(c); });
 	}
 
 	std::string Lower(std::string_view str) {
 		std::string result(str);
-		std::transform(result.begin(), result.end(), result.begin(), std::tolower);
+		std::transform(result.begin(), result.end(), result.begin(), [](auto c) { return std::tolower(c); });
 		return result;
 	}
 
