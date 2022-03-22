@@ -58,6 +58,8 @@ add_library( lxd SHARED
 	WinHTTPWrappers.h
 	smallvector.h
 	smallvector.cpp
+	map.h
+	map.cpp
 	${VERSION_RC}
 )
 
