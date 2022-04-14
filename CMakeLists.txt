@@ -60,6 +60,8 @@ add_library( lxd SHARED
 	smallvector.cpp
 	map.h
 	map.cpp
+	glb.h
+	glb.cpp
 	${VERSION_RC}
 )
 
