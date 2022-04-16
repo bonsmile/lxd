@@ -1,11 +1,12 @@
 #pragma once
 
+#include "defines.h"
 #include <cstdint>
 #include <vector>
 #include <string_view>
 
 namespace lxd {
-	class Glb {
+	class DLL_PUBLIC Glb {
 	public:
 		struct Header {
 			uint32_t magic;
