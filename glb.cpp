@@ -4,10 +4,24 @@
 #include <unordered_map>
 #include "debug.h"
 #include "fileio.h"
+#include <variant>
+
+namespace std {
+	template <>
+	struct hash<lxd::MyVec3> {
+		size_t operator()(const lxd::MyVec3& vec) const {
+			size_t seed = 0;
+			for(int i = 0; i < 3; ++i) {
+				seed ^=
+					std::hash<float>()(vec.v[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			}
+			return seed;
+		}
+	};
+}
 
 namespace lxd {
-	template <class T>
-	bool Glb<T>::load(std::string_view buffer) {
+	bool Glb::load(std::string_view buffer) {
 		assert(buffer.size() > sizeof(Header));
 
 		auto magic = buffer.substr(0, 4);
@@ -22,15 +36,66 @@ namespace lxd {
 		return true;
 	}
 
-	template <class T>
-	bool Glb<T>::load(const std::vector<MyVec3>& points, const std::vector<T>& indices) {
+	bool Glb::loadFromStl(std::string_view buffer) {
 		clear();
+
+		if(buffer.size() < 80)
+			return false;
+#pragma pack(1)
+		struct StlFacet {
+			float faceNormal[3];
+			float v1[3];
+			float v2[3];
+			float v3[3];
+			unsigned short attribute;
+		};
+#pragma pack()
+		// *.stl format:
+		//UINT8[80]    – Header - 80 bytes
+		//UINT32       – Number of triangles - 4 bytes
+		auto nFacet = *reinterpret_cast<const uint32_t*>(buffer.data() + 80);
+		std::unordered_map<lxd::MyVec3, int> mapVtxId;
+		std::unordered_map<lxd::MyVec3, int>::iterator iter;
+		mapVtxId.reserve(nFacet);
+		std::vector<lxd::MyVec3> points; // 顶点
+		std::variant<std::vector<uint16_t>, std::vector<uint32_t>> indicesVar;// 索引
+		if(3 * nFacet < USHRT_MAX) {
+			indicesVar = std::vector<uint16_t>();
+		} else {
+			indicesVar = std::vector<uint32_t>();
+		}
+		
+		uint32_t vId = 0;
+		for(uint32_t i = 0; i < nFacet; i++) {
+			auto pFacet = reinterpret_cast<const StlFacet*>(buffer.data() + 84 + i * sizeof(StlFacet));
+			auto pV1 = pFacet->v1;
+			for(int j = 0; j < 3; j++) {
+				const lxd::MyVec3* pVec3 = reinterpret_cast<const lxd::MyVec3*>(pV1 + j * 3);
+				iter = mapVtxId.find(*pVec3);
+				if(iter == mapVtxId.end()) {
+					points.push_back(*pVec3);
+					mapVtxId.insert(std::make_pair(*pVec3, vId));
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
+						p->push_back(vId);
+					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
+						p->push_back(vId);
+					vId++;
+				} else {
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
+						p->push_back(iter->second);
+					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
+						p->push_back(iter->second);
+				}
+			}
+		}
 		// Binary Buffer
 		Chunk chunk;
 		chunk.type = 0x004E4942; // BIN
 		{
-			auto pIndices = reinterpret_cast<const char*>(indices.data());
-			chunk.data.assign(pIndices, pIndices + sizeof(T) * indices.size());
+			std::visit([&](auto& indices) {
+				auto pIndices = reinterpret_cast<const char*>(indices.data());
+				chunk.data.assign(pIndices, pIndices + sizeof(indices[0]) * indices.size());
+			}, indicesVar);
 			BufferView bufferView{.buffer = 0, .byteOffset = 0, .byteLength = static_cast<int>(chunk.data.size()), .target = 34963};
 			m_bufferViews.push_back(bufferView);
 		}
@@ -74,12 +139,17 @@ namespace lxd {
 			}
 			// accessors
 			{
+				size_t idxSize, idxCnt;
+				std::visit([&](auto& indices) {
+					idxSize = sizeof(indices[0]);
+					idxCnt = indices.size();
+				}, indicesVar);
 				ksJson* accessors = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "accessors"));
 				ksJson* idxAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
 				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "bufferView"), 0);
 				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), sizeof(T) == 2 ?  5123 : 5125); // unsigned short
-				ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), indices.size());
+				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), idxSize == 2 ? 5123 : 5125); // unsigned short
+				ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), idxCnt);
 				ksJson_SetString(ksJson_AddObjectMember(idxAccessor, "type"), "SCALAR");
 				ksJson* posAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
 				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "bufferView"), 1);
@@ -136,8 +206,7 @@ namespace lxd {
 		return true;
 	}
 
-	template <class T>
-	bool Glb<T>::save(const std::wstring& path) {
+	bool Glb::save(const std::wstring& path) {
 		lxd::File file(path, lxd::WriteOnly | lxd::Truncate);
 		m_header.length = static_cast<uint32_t>(sizeof(Header));
 		for(const auto& chunk : m_chunks) {
@@ -156,14 +225,12 @@ namespace lxd {
 		return result;
 	}
 
-	template <class T>
-	void Glb<T>::clear() {
+	void Glb::clear() {
 		m_chunks.clear();
 		m_header.length = 0;
 	}
 
-	template <class T>
-	void Glb<T>::extractChunk(const char* data, size_t size) {
+	void Glb::extractChunk(const char* data, size_t size) {
 		Chunk chunk;
 		uint32_t length = *reinterpret_cast<const uint32_t*>(data);
 		chunk.type = *reinterpret_cast<const uint32_t*>(data + 4);
@@ -172,8 +239,4 @@ namespace lxd {
 		if(4 + 4 + length < size)
 			extractChunk(data + 4 + 4 + length, size - 4 - 4 - length);
 	}
-
-	// 顶点索引暂时只支持 uint16/uint32
-	template class Glb<uint16_t>;
-	template class Glb<uint32_t>;
 }

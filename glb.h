@@ -13,7 +13,6 @@ namespace lxd {
 		}
 	};
 
-	template <class T>
 	class DLL_PUBLIC Glb {
 	public:
 		struct Header {
@@ -39,7 +38,7 @@ namespace lxd {
 		}
 		~Glb() {}
 		bool load(std::string_view buffer);
-		bool load(const std::vector<MyVec3>& points, const std::vector<T>& indices);
+		bool loadFromStl(std::string_view buffer);
 		bool save(const std::wstring& path);
 	private:
 		void clear();
