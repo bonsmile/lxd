@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include "debug.h"
 #include "fileio.h"
-#include <variant>
 
 namespace std {
 	template <>
@@ -32,6 +31,7 @@ namespace lxd {
 			return false;
 
 		extractChunk(buffer.data() + sizeof(Header), buffer.size() - sizeof(Header));
+		extractJson();
 
 		return true;
 	}
@@ -225,7 +225,28 @@ namespace lxd {
 		return result;
 	}
 
+	std::span<MyVec3> Glb::getPositions() {
+		assert(m_accessors.size() >= 2 && m_bufferViews.size() >= 2);
+		assert(m_accessors[1].componentType == 5126 && std::strcmp(m_accessors[1].type, "VEC3") == 0);
+		std::span<MyVec3> result{reinterpret_cast<MyVec3*>(m_chunks[1].data.data() + m_accessors[1].byteOffset), static_cast<size_t>(m_accessors[1].count)};
+		return result;
+	}
+
+	std::variant<std::span<uint16_t>, std::span<uint32_t>> Glb::getIndices() {
+		assert(m_accessors.size() >= 2 && m_bufferViews.size() >= 2);
+		std::variant<std::span<uint16_t>, std::span<uint32_t>> result;
+		assert(std::strcmp(m_accessors[0].type,"SCALAR") == 0);
+		if(m_accessors[0].componentType == 5123) {
+			result = std::span<uint16_t>{reinterpret_cast<uint16_t*>(m_chunks[1].data.data()), static_cast<size_t>(m_accessors[0].count)};
+		} else if(m_accessors[0].componentType == 5125) {
+			result = std::span<uint32_t>{reinterpret_cast<uint32_t*>(m_chunks[1].data.data()), static_cast<size_t>(m_accessors[0].count)};
+		}
+		return result;
+	}
+
 	void Glb::clear() {
+		m_accessors.clear();
+		m_bufferViews.clear();
 		m_chunks.clear();
 		m_header.length = 0;
 	}
@@ -239,4 +260,36 @@ namespace lxd {
 		if(4 + 4 + length < size)
 			extractChunk(data + 4 + 4 + length, size - 4 - 4 - length);
 	}
+
+	void Glb::extractJson() {
+		assert(!m_chunks.empty() && m_chunks[0].type == 0x4E4F534A);
+		const char* buffer = m_chunks[0].data.data();
+		ksJson* rootNode = ksJson_Create();
+		if(ksJson_ReadFromBuffer(rootNode, buffer, NULL)) {
+			const ksJson* accessors = ksJson_GetMemberByName(rootNode, "accessors");
+			const ksJson* bufferViews = ksJson_GetMemberByName(rootNode, "bufferViews");
+			for(int i = 0; i < ksJson_GetMemberCount(accessors); i++) {
+				const ksJson* accessorNode = ksJson_GetMemberByIndex(accessors, i);
+				Accessor accessor;
+				accessor.bufferView = ksJson_GetInt32(ksJson_GetMemberByName(accessorNode, "bufferView"), 0);
+				accessor.byteOffset = ksJson_GetInt32(ksJson_GetMemberByName(accessorNode, "byteOffset"), 0);
+				accessor.componentType = ksJson_GetInt32(ksJson_GetMemberByName(accessorNode, "componentType"), 0);
+				accessor.count = ksJson_GetInt32(ksJson_GetMemberByName(accessorNode, "count"), 0);
+				strcpy(accessor.type, ksJson_GetString(ksJson_GetMemberByName(accessorNode, "type"), ""));
+				m_accessors.push_back(accessor);
+			}
+			for(int i = 0; i < ksJson_GetMemberCount(bufferViews); i++) {
+				const ksJson* bufferviewNode = ksJson_GetMemberByIndex(bufferViews, i);
+				BufferView bufferview;
+				bufferview.buffer = ksJson_GetInt32(ksJson_GetMemberByName(bufferviewNode, "buffer"), 0);
+				bufferview.byteOffset = ksJson_GetInt32(ksJson_GetMemberByName(bufferviewNode, "byteOffset"), 0);
+				bufferview.byteLength = ksJson_GetInt32(ksJson_GetMemberByName(bufferviewNode, "byteLength"), 0);
+				bufferview.target = ksJson_GetInt32(ksJson_GetMemberByName(bufferviewNode, "target"), 0);
+				m_bufferViews.push_back(bufferview);
+			}
+		}
+		ksJson_Destroy(rootNode);
+	}
+
+
 }

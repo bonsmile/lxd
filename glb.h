@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 #include <string_view>
+#include <span>
+#include <variant>
 
 namespace lxd {
 	struct MyVec3 {
@@ -24,6 +26,13 @@ namespace lxd {
 			uint32_t type;
 			std::vector<char> data;
 		};
+		struct Accessor {
+			int bufferView;
+			int byteOffset;
+			int componentType;
+			int count;
+			char type[8];
+		};
 		struct BufferView {
 			int buffer;
 			int byteOffset;
@@ -40,11 +49,16 @@ namespace lxd {
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
 		bool save(const std::wstring& path);
+		//
+		std::span<MyVec3> getPositions();
+		std::variant<std::span<uint16_t>, std::span<uint32_t>> getIndices();
 	private:
 		void clear();
 		void extractChunk(const char* data, size_t size);
+		void extractJson();
 	private:
 		Header m_header;
+		std::vector<Accessor> m_accessors;
 		std::vector<BufferView> m_bufferViews;
 		std::vector<Chunk> m_chunks;
 	};
