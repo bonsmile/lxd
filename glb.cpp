@@ -228,7 +228,7 @@ namespace lxd {
 	std::span<MyVec3> Glb::getPositions() {
 		assert(m_accessors.size() >= 2 && m_bufferViews.size() >= 2);
 		assert(m_accessors[1].componentType == 5126 && std::strcmp(m_accessors[1].type, "VEC3") == 0);
-		std::span<MyVec3> result{reinterpret_cast<MyVec3*>(m_chunks[1].data.data() + m_accessors[1].byteOffset), static_cast<size_t>(m_accessors[1].count)};
+		std::span<MyVec3> result{reinterpret_cast<MyVec3*>(m_chunks[1].data.data() + m_accessors[1].byteOffset + m_bufferViews[m_accessors[1].bufferView].byteOffset), static_cast<size_t>(m_accessors[1].count)};
 		return result;
 	}
 
