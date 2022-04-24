@@ -98,12 +98,7 @@ namespace lxd {
 			}, indicesVar);
 			BufferView bufferView{.buffer = 0, .byteOffset = 0, .byteLength = static_cast<int>(chunk.data.size()), .target = 34963};
 			m_bufferViews.push_back(bufferView);
-		}
-		{
-			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
-			auto pPoints = reinterpret_cast<const char*>(points.data());
-			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3) * points.size());
-			// 每个 Chunk 末尾需要 4 字节对齐
+			// 每个 Chunk 长度需要是 4 的倍数, 此 chunk = indices + positions, postions 永远是 4 的倍数，因此只需要处理 ushort index 这种情况
 			auto curSize = chunk.data.size();
 			if(curSize % 4 != 0) {
 				size_t extra = 4 - curSize % 4;
@@ -111,6 +106,11 @@ namespace lxd {
 					chunk.data.push_back(0x00);
 				}
 			}
+		}
+		{
+			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
+			auto pPoints = reinterpret_cast<const char*>(points.data());
+			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3) * points.size());
 			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
 			m_bufferViews.push_back(bufferView);
 		}
@@ -133,7 +133,7 @@ namespace lxd {
 			for(auto& bufferView : m_bufferViews) {
 				ksJson* pBufferView = ksJson_SetObject(ksJson_AddArrayElement(bufferViews));
 				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "buffer"), bufferView.buffer);
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "byteOffset"), bufferView.byteOffset);
+				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "byteOffset"), bufferView.byteOffset); // buffer 内的偏移
 				ksJson_SetUint64(ksJson_AddObjectMember(pBufferView, "byteLength"), bufferView.byteLength);
 				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "target"), bufferView.target);
 			}
@@ -147,7 +147,7 @@ namespace lxd {
 				ksJson* accessors = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "accessors"));
 				ksJson* idxAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
 				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "bufferView"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0);
+				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0); // bufferView 内的偏移
 				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), idxSize == 2 ? 5123 : 5125); // unsigned short
 				ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), idxCnt);
 				ksJson_SetString(ksJson_AddObjectMember(idxAccessor, "type"), "SCALAR");
