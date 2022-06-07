@@ -112,16 +112,27 @@ namespace lxd {
 			return true;
 		}
 
-		size_t i = path.find_last_of(L"\\");
-		if (i == std::wstring_view::npos) {
+		if (path.empty()) {
 			return false;
 		}
 
-		if (!CreateDirRecursive(path.substr(0, i))) {
-			return false;
-		}
+		size_t searchOffset = 0;
+		do {
+			auto tokenPos = path.find_first_of(L"\\/", searchOffset);
+			// treat the entire path as a folder if no folder separator not found
+			if (tokenPos == std::wstring::npos) {
+				tokenPos = path.size();
+			}
 
-		return CreateDir(path.data());
+			std::wstring subdir = path.substr(0, tokenPos);
+
+			if (!subdir.empty() && !DirExists(subdir.c_str()) && !CreateDirectory(subdir.c_str(), nullptr)) {
+				return false; // return error if failed creating dir
+			}
+			searchOffset = tokenPos + 1;
+		} while (searchOffset < path.size());
+
+		return true;
 	}
 
 	int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories) {
