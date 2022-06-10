@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <cassert>
+#include <map>
 
 
 namespace lxd {
@@ -159,8 +160,20 @@ public:
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 		std::function<void(float progress)> onProgress,
-		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
+		const std::map<std::wstring, std::wstring>& headers = {},
+		const std::vector<std::pair<std::string_view, std::string_view>>& formData = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
+		DWORD httpAuthScheme = 0,
+		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
+	);
+
+	HRESULT Initialize(
+		const WinHTTPWrappers::CConnection& connection,
+		LPCWSTR pwszObjectName,
+		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
+		std::function<void(float progress)> onProgress,
+		const std::map<std::wstring, std::wstring>& headers = {},
+		std::string_view body = "",
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
@@ -181,6 +194,7 @@ public:
 		const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files
 	) const;
+
 private:
 	std::function<void(HRESULT, DWORD, std::string_view)> _onComplete;
 	std::function<void(float)> _onProgress;
@@ -188,7 +202,8 @@ private:
 	const wchar_t* _formDataBoundaryW = L"1SUB64X86GK5";
 	const char* _formDataBoundary = "1SUB64X86GK5";
 
-	std::string _formData;
+	std::string _body;
+	std::map<std::wstring, std::wstring> _headers;
 	bool _isWriteDataCompleted = false;
 	unsigned int _bufferPos = 0;
 };
@@ -210,8 +225,21 @@ public:
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 		std::function<void(float progress)> onProgress = {},
-		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
+		const std::map<std::wstring, std::wstring>& headers = {},
+		const std::vector<std::pair<std::string_view, std::string_view>>& formData = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
+		DWORD httpAuthScheme = 0,
+		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
+	);
+
+	PostRequestTask(
+		const WinHTTPWrappers::CSession& session,
+		LPCWSTR pwszServerName,
+		LPCWSTR pwszObjectName,
+		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
+		std::function<void(float progress)> onProgress = {},
+		const std::map<std::wstring, std::wstring>& headers = {},
+		std::string_view body = "",
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
@@ -248,8 +276,20 @@ public:
 		const std::vector<std::pair<std::string_view, std::string_view>>& pairs = {},
 		const std::vector<std::tuple<std::string_view, std::string_view, std::string_view>>& files = {},
 		DWORD httpAuthScheme = 0,
-		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
+		const std::pair<std::wstring_view, std::wstring_view>& cred = {},
+		const std::map<std::wstring, std::wstring>& headers = {}
 	);
+
+	unsigned int PostAsync(
+		std::wstring_view url,
+		std::function<void(HRESULT hr, DWORD lastStatusCode, std::string_view response)> onComplete,
+		std::function<void(float progress)> onProgress = {},
+		std::string_view body = "",
+		DWORD httpAuthScheme = 0,
+		const std::pair<std::wstring_view, std::wstring_view>& cred = {},
+		const std::map<std::wstring, std::wstring>& headers = {}
+	);
+
 
 	bool Wait(unsigned int requestId);
 
