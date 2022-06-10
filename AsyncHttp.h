@@ -86,6 +86,7 @@ public:
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 		std::function<void(float progress)> onProgress,
+		const std::map<std::wstring, std::wstring> headers = {},
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
@@ -99,9 +100,12 @@ public:
 	) override;
 
 	HRESULT OnReadData(_In_reads_bytes_(dwBytesRead) const void* lpvBuffer, _In_ DWORD dwBytesRead) override;
+
+	std::wstring GetHeaders() override;
 private:
 	std::function<void(HRESULT, DWORD, std::string_view)> _onComplete;
 	std::function<void(float progress)> _onProgress;
+	std::map<std::wstring, std::wstring> _headers;
 };
 
 class RequestTask {
@@ -130,6 +134,7 @@ public:
 		LPCWSTR pwszObjectName,
 		std::function<void(HRESULT, DWORD, std::string_view)> onComplete,
 		std::function<void(float progress)> onProgress = {},
+		const std::map<std::wstring, std::wstring>& headers = {},
 		std::wstring_view fileToSave = L"",
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
@@ -144,8 +149,6 @@ private:
 	std::unique_ptr<WinHTTPWrappers::CConnection> _conn;
 	std::unique_ptr<GetRequest> _getReq;
 };
-
-
 
 class PostRequest : public MyRequest {
 public:
@@ -266,7 +269,8 @@ public:
 		std::function<void(float progress)> onProgress = {},
 		std::wstring_view fileToSave = L"",
 		DWORD httpAuthScheme = 0,
-		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
+		const std::pair<std::wstring_view, std::wstring_view>& cred = {},
+		const std::map<std::wstring, std::wstring>& headers = {}
 	);
 
 	unsigned int PostFormDataAsync(
