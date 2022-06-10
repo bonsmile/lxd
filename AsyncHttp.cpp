@@ -256,42 +256,26 @@ HRESULT PostRequest::OnWriteData() {
 	}
 
 	HRESULT hr;
-	if (m_fileToUpload.operator HANDLE()) {
-		// 从文件读取body数据
-		hr = MyRequest::OnWriteData();
-		if (FAILED(hr)) {
+	// 从缓冲区读取body数据
+	if (m_dwRequestSize) {
+		ATLASSERT(m_lpRequest != nullptr); //m_pbyRequest should be provided if m_dwRequestSize is non-zero
+
+		// 为了显示进度条分段传输
+		unsigned int nBytesWrite = _bufferPos + BUFFER_SIZE <= m_dwRequestSize ? BUFFER_SIZE : m_dwRequestSize - _bufferPos;
+		hr = WriteData((BYTE*)m_lpRequest + _bufferPos, nBytesWrite, nullptr);
+		if (FAILED(hr))
 			return hr;
-		}
+
+		_bufferPos += nBytesWrite;
 
 		if (_onProgress) {
-			if (m_nFileToUploadSize <= 0) {
-				_onProgress(0);
-			} else {
-				_onProgress(float(m_nFileToUploadIndex) / m_nFileToUploadSize);
-			}
+			_onProgress(float(_bufferPos) / m_dwRequestSize);
 		}
+
+		hr = _bufferPos >= m_dwRequestSize ? S_FALSE : S_OK;
 	} else {
-		// 从缓冲区读取body数据
-		if (m_dwRequestSize) {
-			ATLASSERT(m_lpRequest != nullptr); //m_pbyRequest should be provided if m_dwRequestSize is non-zero
-
-			// 为了显示进度条分段传输
-			unsigned int nBytesWrite = _bufferPos + BUFFER_SIZE <= m_dwRequestSize ? BUFFER_SIZE : m_dwRequestSize - _bufferPos;
-			hr = WriteData((BYTE*)m_lpRequest + _bufferPos, nBytesWrite, nullptr);
-			if (FAILED(hr))
-				return hr;
-
-			_bufferPos += nBytesWrite;
-
-			if (_onProgress) {
-				_onProgress(float(_bufferPos) / m_dwRequestSize);
-			}
-
-			hr = _bufferPos >= m_dwRequestSize ? S_FALSE : S_OK;
-		} else {
-			//There's nothing more to upload so return S_FALSE
-			hr = S_FALSE;
-		}
+		//There's nothing more to upload so return S_FALSE
+		hr = S_FALSE;
 	}
 
 	if (hr == S_FALSE) {
