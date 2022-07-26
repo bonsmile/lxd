@@ -48,7 +48,9 @@ namespace lxd {
 		~Glb() {}
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
+		bool createFromPolygonSoup(const std::vector<MyVec3>& points);
 		bool save(const std::wstring& path);
+		std::vector<uint8_t> searialize(int id);
 		//
 		std::span<MyVec3> getPositions();
 		std::variant<std::span<uint16_t>, std::span<uint32_t>> getIndices();
