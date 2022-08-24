@@ -508,4 +508,114 @@ error:
         if(hConnect) WinHttpCloseHandle(hConnect);
         if(hSession) WinHttpCloseHandle(hSession);
     }
+
+    struct HttpHandleCloser { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) WinHttpCloseHandle(h); } };
+    using ScopedHttpHandle = std::unique_ptr<std::remove_pointer<HANDLE>::type, HttpHandleCloser>;
+
+    static std::string HttpRequest(
+        const wchar_t* host,
+        const wchar_t* path,
+        const wchar_t* verb,
+        bool https,
+        const std::vector<std::pair<std::wstring, std::wstring>>& headers,
+        std::string_view body
+    ) {
+        // Specify an HTTP server.
+        ScopedHttpHandle hSession(WinHttpOpen(
+            L"lxd with WinHTTP Sync /1.0",
+            WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+            WINHTTP_NO_PROXY_NAME,
+            WINHTTP_NO_PROXY_BYPASS,
+            0
+        ));
+        if (!hSession) {
+            return {};
+        }
+
+        // Connect
+        ScopedHttpHandle hConnect(WinHttpConnect(hSession.get(), host, INTERNET_DEFAULT_HTTPS_PORT, 0));
+        if (!hConnect) {
+            return {};
+        }
+
+        ScopedHttpHandle hRequest(WinHttpOpenRequest(
+            hConnect.get(),
+            verb,
+            path,
+            NULL, WINHTTP_NO_REFERER,
+            WINHTTP_DEFAULT_ACCEPT_TYPES,
+            https ? WINHTTP_FLAG_SECURE : 0
+        ));
+        if (!hRequest) {
+            return {};
+        }
+
+        std::wstring headersContent;
+        for (const auto& header : headers) {
+            headersContent.append(header.first);
+            headersContent.push_back(L':');
+            headersContent.append(header.second);
+            headersContent.append(L"\r\n");
+        }
+        headersContent.pop_back();
+        headersContent.pop_back();
+
+        if (!WinHttpSendRequest(
+            hRequest.get(),
+            headersContent.c_str(),
+            (DWORD)headersContent.size(),
+            (void*)body.data(),
+            (DWORD)body.size(),
+            (DWORD)body.size(),
+            NULL
+            )) {
+            return {};
+        }
+
+        if (!WinHttpReceiveResponse(hRequest.get(), NULL)) {
+            return {};
+        }
+
+        std::string result;
+        while (true) {
+            // Check for available data.
+            DWORD dwSize = 0;
+            if (!WinHttpQueryDataAvailable(hRequest.get(), &dwSize)) {
+                lxd::print("Error {} in WinHttpQueryDataAvailable.\n", GetLastError());
+            }
+
+            if (dwSize == 0) {
+                break;
+            }
+
+            size_t originSize = result.size();
+            result.resize(result.size() + dwSize);
+            unsigned long dwDownloaded = 0;
+            WinHttpReadData(hRequest.get(), result.data() + originSize, dwSize, &dwDownloaded);
+            if (dwDownloaded != dwSize) {
+                result.resize(originSize + dwDownloaded);
+            }
+        }
+
+        return result;
+    }
+
+    std::string Post(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        const std::vector<std::pair<std::wstring, std::wstring>>& headers,
+        std::string_view body
+    ) {
+        return HttpRequest(host, path, L"POST", https, headers, body);
+    }
+
+    std::string DLL_PUBLIC Get(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        const std::vector<std::pair<std::wstring, std::wstring>>& headers
+    ) {
+        return HttpRequest(host, path, L"GET", https, headers, {});
+    }
 }

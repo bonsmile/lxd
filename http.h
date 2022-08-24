@@ -74,4 +74,19 @@ namespace lxd {
         void* hConnect = nullptr;
         void* hRequest = nullptr;
     };
+
+    std::string DLL_PUBLIC Post(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        const std::vector<std::pair<std::wstring, std::wstring>>& headers,
+        std::string_view body
+    );
+
+    std::string DLL_PUBLIC Get(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        const std::vector<std::pair<std::wstring, std::wstring>>& headers
+    );
 }
