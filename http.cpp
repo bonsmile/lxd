@@ -9,7 +9,8 @@
 #include <fmt/xchar.h>
 
 namespace lxd {
-	HttpRequestSync::HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post) {
+	HttpRequestSync::HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post,
+        const std::vector<std::pair<std::wstring_view, std::wstring_view>>& headers) {
         // Specify an HTTP server.
         HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
@@ -32,14 +33,19 @@ namespace lxd {
                                           INTERNET_DEFAULT_HTTPS_PORT == port ? WINHTTP_FLAG_SECURE : 0);
 
         // Send a request.
-        if(hRequest)
+        if(hRequest) {
+            std::wstring header;
+            for(auto pair : headers) {
+                header.append(fmt::format(L"{}:{}\r\n", pair.first, pair.second));
+            }
             bResults = WinHttpSendRequest(hRequest,
-                                          WINHTTP_NO_ADDITIONAL_HEADERS,
-                                          0,
-                                          post.empty() ? WINHTTP_NO_REQUEST_DATA : const_cast<char*>(post.c_str()),
-                                          post.empty() ? 0 : static_cast<DWORD>(post.size()),
-                                          post.empty() ? 0 : static_cast<DWORD>(post.size()),
-                                          NULL);
+                header.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : header.c_str(),
+                header.size(),
+                post.empty() ? WINHTTP_NO_REQUEST_DATA : const_cast<char*>(post.c_str()),
+                post.empty() ? 0 : static_cast<DWORD>(post.size()),
+                post.empty() ? 0 : static_cast<DWORD>(post.size()),
+                NULL);
+        }
 
         // End the request.
         if(bResults)

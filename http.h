@@ -7,7 +7,8 @@
 namespace lxd {
     class DLL_PUBLIC HttpRequestSync {
     public:
-        HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post = {});
+        HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post = {},
+            const std::vector<std::pair<std::wstring_view, std::wstring_view>>& headers = {});
         ~HttpRequestSync();
     private:
         unsigned long dwSize = 0;
