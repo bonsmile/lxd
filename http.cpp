@@ -515,6 +515,75 @@ error:
         if(hSession) WinHttpCloseHandle(hSession);
     }
 
+    PutFile::PutFile(const wchar_t* host, const wchar_t* path, bool https, std::string& result, std::string_view data) {
+        DWORD dwBytesWritten = 0;
+        BOOL  bResults = FALSE;
+
+        // Use WinHttpOpen to obtain a session handle.
+        hSession = WinHttpOpen(L"A WinHTTP Example Program/1.0",
+            WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+            WINHTTP_NO_PROXY_NAME,
+            WINHTTP_NO_PROXY_BYPASS, 0);
+        if(!hSession)
+            goto error;
+
+        hConnect = WinHttpConnect(hSession, host, INTERNET_DEFAULT_HTTP_PORT, 0);
+        if(!hConnect)
+            goto error;
+
+        hRequest = WinHttpOpenRequest(hConnect, L"PUT",
+            path,
+            NULL, WINHTTP_NO_REFERER,
+            WINHTTP_DEFAULT_ACCEPT_TYPES,
+            0);
+        if(!hRequest)
+            goto error;
+
+        if(!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, data.size(), 0))
+            goto error;
+
+        if(!WinHttpWriteData(hRequest, data.data(), data.size(), &dwBytesWritten))
+            goto error;
+
+        if(!WinHttpReceiveResponse(hRequest, NULL))
+            goto error;
+
+        do {
+            // Check for available data.
+            dwSize = 0;
+            if(!WinHttpQueryDataAvailable(hRequest, &dwSize))
+                goto error;
+
+            // Allocate space for the buffer.
+            auto pszOutBuffer = new char[dwSize + 1];
+            if(!pszOutBuffer) {
+                lxd::print("Out of memory\n");
+                dwSize = 0;
+            } else {
+                // Read the data.
+                ZeroMemory(pszOutBuffer, dwSize + 1);
+                if(!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
+                    dwSize, &dwDownloaded)) {
+                    lxd::print("Error {} in WinHttpReadData.\n", GetLastError());
+                } else {
+                    result += pszOutBuffer;
+                }
+                // Free the memory allocated to the buffer.
+                delete[] pszOutBuffer;
+            }
+        } while(dwSize > 0);
+
+        // Report any errors.
+error:
+        lxd::print("Error {} has occurred.\n", GetLastError());
+    }
+    PutFile::~PutFile() {
+        // Close any open handles.
+        if(hRequest) WinHttpCloseHandle(hRequest);
+        if(hConnect) WinHttpCloseHandle(hConnect);
+        if(hSession) WinHttpCloseHandle(hSession);
+    }
+
     struct HttpHandleCloser { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) WinHttpCloseHandle(h); } };
     using ScopedHttpHandle = std::unique_ptr<std::remove_pointer<HANDLE>::type, HttpHandleCloser>;
 

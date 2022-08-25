@@ -76,6 +76,19 @@ namespace lxd {
         void* hRequest = nullptr;
     };
 
+    class DLL_PUBLIC PutFile {
+    public:
+        PutFile(const wchar_t* host, const wchar_t* path, bool https,
+            std::string& result, std::string_view data);
+        ~PutFile();
+    private:
+        unsigned long dwSize = 0;
+        unsigned long dwDownloaded = 0;
+        void* hSession = nullptr;
+        void* hConnect = nullptr;
+        void* hRequest = nullptr;
+    };
+
     std::string DLL_PUBLIC Post(
         const wchar_t* host,
         const wchar_t* path,
