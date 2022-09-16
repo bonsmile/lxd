@@ -378,7 +378,7 @@ namespace lxd {
 		return result;
 	}
 
-	std::vector<uint8_t> Glb::searialize(int id) {
+	std::vector<uint8_t> Glb::searialize() {
 		m_header.length = static_cast<uint32_t>(sizeof(Header));
 		for(const auto& chunk : m_chunks) {
 			m_header.length += static_cast<uint32_t>(2 * sizeof(uint32_t) + chunk.data.size());
