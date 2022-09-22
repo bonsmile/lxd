@@ -19,6 +19,4 @@ namespace lxd {
 		std::wstring output = fmt::vformat(fmt, fmt::make_wformat_args(std::forward<Args>(args)...));
 		OutputDebugStringW(output.c_str());
 	}
-
-	#define verify(x) {if(!(x)) _asm{int 0x03}}
 }
