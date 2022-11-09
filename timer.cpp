@@ -33,12 +33,15 @@ namespace lxd {
         return double(nanosecond()) * 0.000000001;
     }
 
-    const std::string date() {
+    const std::string date(const DateFormat fmt) {
         time_t now;
         time(&now);
 
         struct tm* local = localtime(&now);
 
-        return fmt::format("{:%Y%m%d%H%M%S}", *local);
+        if(fmt == Default)
+            return fmt::format("{:%Y%m%d%H%M%S}", *local);
+        else
+            return fmt::format("{:%Y-%m-%d %H:%M:%S}", *local);
     }
 }

@@ -9,5 +9,9 @@ namespace lxd {
 	DLL_PUBLIC uint64_t nanosecond();
 	DLL_PUBLIC float millisecond();
 	DLL_PUBLIC double second();
-	DLL_PUBLIC const std::string date();
+	enum DateFormat {
+		Default,
+		Human
+	};
+	DLL_PUBLIC const std::string date(const DateFormat fmt = Default);
 }
