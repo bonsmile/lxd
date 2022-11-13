@@ -26,24 +26,24 @@ namespace lxd {
 		FileEnd
 	};
 	
-	DLL_PUBLIC bool FileExists(const wchar_t* path);
-	DLL_PUBLIC void* OpenFile(const wchar_t* path, int mode);
+	DLL_PUBLIC bool FileExists(const Char* path);
+	DLL_PUBLIC void* OpenFile(const Char* path, int mode);
 	DLL_PUBLIC bool CloseFile(void* handle);
-	DLL_PUBLIC bool WriteFile(const wchar_t* path, char const* buffer, size_t bufferSize);
-	DLL_PUBLIC std::string ReadFile(const wchar_t* path);
-	DLL_PUBLIC bool RemoveFile(const wchar_t* path);
+	DLL_PUBLIC bool WriteFile(const Char* path, char const* buffer, size_t bufferSize);
+	DLL_PUBLIC std::string ReadFile(const Char* path);
+	DLL_PUBLIC bool RemoveFile(const Char* path);
 
-	DLL_PUBLIC bool CreateDir(const wchar_t* path);
-	DLL_PUBLIC bool CreateDirRecursive(const std::wstring& path);
-	DLL_PUBLIC int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories = true);
-	DLL_PUBLIC bool DirExists(std::wstring_view path);
-	DLL_PUBLIC bool ListDir(std::wstring_view path, std::vector<std::wstring>& result, bool recursive = false, const wchar_t* filter = nullptr);
+	DLL_PUBLIC bool CreateDir(const Char* path);
+	DLL_PUBLIC bool CreateDirRecursive(const String& path);
+	DLL_PUBLIC int DeleteDir(StringView path, bool bDeleteSubdirectories = true);
+	DLL_PUBLIC bool DirExists(StringView path);
+	DLL_PUBLIC bool ListDir(StringView path, std::vector<String>& result, bool recursive = false, const Char* filter = nullptr);
 
-	DLL_PUBLIC std::wstring GetExePath();
+	DLL_PUBLIC String GetExePath();
 
 	class DLL_PUBLIC File {
 	public:
-		File(const std::wstring& path, int mode);
+		File(const String& path, int mode);
 		~File();
 		long long size() { return _size; }
 		bool seek(long long distance, SeekMode mode, long long* newPtr = nullptr);

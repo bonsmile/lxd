@@ -7,7 +7,7 @@
 #include <fmt/xchar.h>
 
 namespace lxd {
-	bool FileExists(const wchar_t* path) {
+	bool FileExists(const Char* path) {
 		return GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES;
 	}
 
@@ -17,7 +17,7 @@ namespace lxd {
 		return (openMode & OpenMode::WriteOnly) && !(openMode & OpenMode::ExistingOnly);
 	}
 
-	void* OpenFile(const wchar_t* path, int openMode) {
+	void* OpenFile(const Char* path, int openMode) {
 		// All files are opened in share mode (both read and write).
 		DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 		int accessRights = 0;
@@ -54,7 +54,7 @@ namespace lxd {
 		return CloseHandle(handle);
 	}
 
-	bool WriteFile(const wchar_t* path, char const* buffer, size_t bufferSize) {
+	bool WriteFile(const Char* path, char const* buffer, size_t bufferSize) {
 		// open the file
 		auto handle = OpenFile(path, OpenMode::WriteOnly | OpenMode::Truncate);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -75,7 +75,7 @@ namespace lxd {
 		return true;
 	}
 
-	std::string ReadFile(const wchar_t* path) {
+	std::string ReadFile(const Char* path) {
 		// open the file
 		auto handle = OpenFile(path, OpenMode::ReadOnly | OpenMode::ExistingOnly);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -99,15 +99,15 @@ namespace lxd {
 		return buffer;
 	}
 
-	bool RemoveFile(const wchar_t* path) {
+	bool RemoveFile(const Char* path) {
 		return DeleteFile(path) != 0;
 	}
 
-	bool CreateDir(const wchar_t* path) {
+	bool CreateDir(const Char* path) {
 		return ::CreateDirectoryW(path, nullptr);
 	}
 
-	bool CreateDirRecursive(const std::wstring& path) {
+	bool CreateDirRecursive(const String& path) {
 		if (DirExists(path)) {
 			return true;
 		}
@@ -135,7 +135,7 @@ namespace lxd {
 		return true;
 	}
 
-	int DeleteDir(std::wstring_view path, bool bDeleteSubdirectories) {
+	int DeleteDir(StringView path, bool bDeleteSubdirectories) {
 		bool				bSubdirectory = false; // Flag, indicating whether
 												   // subdirectories have been found
 		HANDLE				hFile;                 // Handle to directory
@@ -250,7 +250,7 @@ namespace lxd {
 		return true;
 	 }
 
-	 std::wstring GetExePath() {
+	 String GetExePath() {
 		 // Retrieve fully qualified module pathname
 		 std::wstring buffer(MAX_PATH, 0);
 		 DWORD cbSize = ::GetModuleFileNameW(nullptr, buffer.data(),
@@ -267,7 +267,7 @@ namespace lxd {
 		 return buffer;
 	 }
 
-	 File::File(const std::wstring& path, int mode) {
+	 File::File(const String& path, int mode) {
 		 assert(path.size() > 3); // D:\\1
 		 auto offset = path.find_last_of(L"\\");
 		 if(offset != std::wstring::npos) {

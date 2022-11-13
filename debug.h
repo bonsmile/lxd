@@ -1,10 +1,13 @@
 #pragma once
 
+#include "defines.h"
 #include <fmt/ostream.h>
 #include <fmt/xchar.h>
+#if defined(_WIN32)
 #include <Windows.h>
 #include <debugapi.h>
-#include "defines.h"
+#else
+#endif
 
 //#endif
 namespace lxd {
