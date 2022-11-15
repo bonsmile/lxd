@@ -1036,7 +1036,7 @@ static bool ksJson_ReadFromBuffer( ksJson * rootNode, const char * buffer, const
 	return true;
 }
 
-static bool ksJson_ReadFromFile( ksJson * rootNode, const char * fileName, const char ** errorStringOut )
+[[maybe_unused]] static bool ksJson_ReadFromFile( ksJson * rootNode, const char * fileName, const char ** errorStringOut )
 {
 	if ( rootNode == NULL || fileName == NULL )
 	{
@@ -1233,7 +1233,7 @@ static bool ksJson_WriteToBuffer( const ksJson * rootNode, char ** bufferOut, in
 	return true;
 }
 
-static bool ksJson_WriteToFile( const ksJson * rootNode, const char * fileName )
+[[maybe_unused]] static bool ksJson_WriteToFile( const ksJson * rootNode, const char * fileName )
 {
 	if ( rootNode == NULL || fileName == NULL )
 	{
@@ -1330,7 +1330,7 @@ static ksJson * ksJson_GetMemberByName( const ksJson * node, const char * name )
 	return NULL;
 }
 
-static const char * ksJson_GetMemberName( const ksJson * node )
+[[maybe_unused]] static const char * ksJson_GetMemberName( const ksJson * node )
 {
 	if ( node != NULL && node->name != NULL )
 	{

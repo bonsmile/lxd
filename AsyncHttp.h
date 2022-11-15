@@ -110,6 +110,8 @@ private:
 
 class RequestTask {
 public:
+	virtual ~RequestTask() {};
+
 	virtual void Wait() = 0;
 
 	virtual void Cancel() = 0;
@@ -139,6 +141,8 @@ public:
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
+
+	virtual ~GetRequestTask() {}
 
 	void Wait() override;
 
@@ -246,6 +250,8 @@ public:
 		DWORD httpAuthScheme = 0,
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
+
+	~PostRequestTask() {}
 
 	void Wait() override;
 

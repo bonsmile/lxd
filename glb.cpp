@@ -75,16 +75,16 @@ namespace lxd {
 				if(iter == mapVtxId.end()) {
 					points.push_back(*pVec3);
 					mapVtxId.insert(std::make_pair(*pVec3, vId));
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
-						p->push_back(vId);
-					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
-						p->push_back(vId);
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+						p->push_back((uint16_t)vId);
+					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+						p1->push_back(vId);
 					vId++;
 				} else {
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
-						p->push_back(iter->second);
-					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
-						p->push_back(iter->second);
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+						p->push_back((uint16_t)iter->second);
+					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+						p1->push_back(iter->second);
 				}
 			}
 		}
@@ -229,16 +229,16 @@ namespace lxd {
 				if(iter == mapVtxId.end()) {
 					points.push_back(v);
 					mapVtxId.insert(std::make_pair(v, vId));
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
-						p->push_back(vId);
-					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
-						p->push_back(vId);
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+						p->push_back((uint16_t)vId);
+					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+						p1->push_back(vId);
 					vId++;
 				} else {
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar); p)
-						p->push_back(iter->second);
-					else if(auto p = std::get_if<std::vector<uint32_t>>(&indicesVar); p)
-						p->push_back(iter->second);
+					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+						p->push_back((uint16_t)iter->second);
+					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+						p1->push_back(iter->second);
 				}
 			}
 		}

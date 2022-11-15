@@ -100,14 +100,14 @@ char* FastIntToBuffer(int_type i, char* buffer) {
   // TODO(jorg): This signed-ness check is used because it works correctly
   // with enums, and it also serves to check that int_type is not a pointer.
   // If one day something like std::is_signed<enum E> works, switch to it.
-  if (static_cast<int_type>(1) - 2 < 0) {  // Signed
-    if (sizeof(i) > 32 / 8) {           // 33-bit to 64-bit
+  if constexpr (static_cast<int_type>(1) - 2 < 0) {  // Signed
+    if constexpr (sizeof(i) > 32 / 8) {           // 33-bit to 64-bit
       return FastIntToBuffer(static_cast<int64_t>(i), buffer);
     } else {  // 32-bit or less
       return FastIntToBuffer(static_cast<int32_t>(i), buffer);
     }
   } else {                     // Unsigned
-    if (sizeof(i) > 32 / 8) {  // 33-bit to 64-bit
+    if constexpr (sizeof(i) > 32 / 8) {  // 33-bit to 64-bit
       return FastIntToBuffer(static_cast<uint64_t>(i), buffer);
     } else {  // 32-bit or less
       return FastIntToBuffer(static_cast<uint32_t>(i), buffer);

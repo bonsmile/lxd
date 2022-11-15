@@ -5,24 +5,25 @@
 #include <cctype>
 #include <regex>
 #include <charconv>
+#include <cwctype>
 
 namespace lxd {
 	void Upper(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
+		std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return (char)std::toupper(c); });
 	}
 	void Upper(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
+		std::transform(str.begin(), str.end(), str.begin(), [](wchar_t c) { return (wchar_t)std::towupper(c); });
 	}
 	void Lower(std::string& str) {
-		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::tolower(c); });
+		std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return (char)std::tolower(c); });
 	}
 	void Lower(std::wstring& str) {
-		std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::tolower(c); });
+		std::transform(str.begin(), str.end(), str.begin(), [](wchar_t c) { return (wchar_t)std::towlower(c); });
 	}
 
 	std::string Lower(std::string_view str) {
 		std::string result(str);
-		std::transform(result.begin(), result.end(), result.begin(), [](auto c) { return std::tolower(c); });
+		std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return (char)std::tolower(c); });
 		return result;
 	}
 

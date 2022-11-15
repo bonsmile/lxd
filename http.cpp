@@ -12,7 +12,7 @@ namespace lxd {
 	HttpRequestSync::HttpRequestSync(const wchar_t* host, unsigned short port, const wchar_t* path, std::string& result, const std::string& post,
         const std::vector<std::pair<std::wstring_view, std::wstring_view>>& headers) {
         // Specify an HTTP server.
-        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+        hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                          WINHTTP_NO_PROXY_NAME,
                                          WINHTTP_NO_PROXY_BYPASS,
@@ -40,7 +40,7 @@ namespace lxd {
             }
             bResults = WinHttpSendRequest(hRequest,
                 header.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : header.c_str(),
-                header.size(),
+                (DWORD)header.size(),
                 post.empty() ? WINHTTP_NO_REQUEST_DATA : const_cast<char*>(post.c_str()),
                 post.empty() ? 0 : static_cast<DWORD>(post.size()),
                 post.empty() ? 0 : static_cast<DWORD>(post.size()),
@@ -109,7 +109,7 @@ namespace lxd {
         const char* finalBody = "--1SUB64X86GK5--\r\n";
         size_t totalSize{};
         // Specify an HTTP server.
-        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+        hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                          WINHTTP_NO_PROXY_NAME,
                                          WINHTTP_NO_PROXY_BYPASS,
@@ -254,7 +254,7 @@ error:
         std::string content;
         
         // Specify an HTTP server.
-        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+        hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                          WINHTTP_NO_PROXY_NAME,
                                          WINHTTP_NO_PROXY_BYPASS,
@@ -345,7 +345,7 @@ error:
     PostJson::PostJson(const wchar_t* host, const wchar_t* path, bool https,
                        std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs) {
         // Specify an HTTP server.
-        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+        hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                          WINHTTP_NO_PROXY_NAME,
                                          WINHTTP_NO_PROXY_BYPASS,
@@ -376,7 +376,7 @@ error:
         json = fmt::format("{{{}}}", json);
         if(!WinHttpSendRequest(hRequest,
                                contentType,
-                               -1,
+                               (DWORD)-1,
                                const_cast<char*>(json.c_str()),
                                static_cast<DWORD>(json.size()),
                                static_cast<DWORD>(json.size()),
@@ -428,7 +428,7 @@ error:
                        std::string& result, const std::vector<std::pair<std::string, std::string>>& pairs,
                        const char* authID, const char* authSecret) {
         // Specify an HTTP server.
-        HINTERNET hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
+        hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
                                          WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                          WINHTTP_NO_PROXY_NAME,
                                          WINHTTP_NO_PROXY_BYPASS,
@@ -467,7 +467,7 @@ error:
         json = fmt::format("{{{}}}", json);
         if(!WinHttpSendRequest(hRequest,
                                header.data(),
-                               -1,
+                               (DWORD)-1,
                                const_cast<char*>(json.c_str()),
                                static_cast<DWORD>(json.size()),
                                static_cast<DWORD>(json.size()),
@@ -515,9 +515,8 @@ error:
         if(hSession) WinHttpCloseHandle(hSession);
     }
 
-    PutFile::PutFile(const wchar_t* host, const wchar_t* path, bool https, std::string& result, std::string_view data) {
+    PutFile::PutFile(const wchar_t* host, const wchar_t* path, bool /*https*/, std::string& result, std::string_view data) {
         DWORD dwBytesWritten = 0;
-        BOOL  bResults = FALSE;
 
         // Use WinHttpOpen to obtain a session handle.
         hSession = WinHttpOpen(L"A WinHTTP Example Program/1.0",
@@ -539,10 +538,10 @@ error:
         if(!hRequest)
             goto error;
 
-        if(!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, data.size(), 0))
+        if(!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, (DWORD)data.size(), 0))
             goto error;
 
-        if(!WinHttpWriteData(hRequest, data.data(), data.size(), &dwBytesWritten))
+        if(!WinHttpWriteData(hRequest, data.data(), (DWORD)data.size(), &dwBytesWritten))
             goto error;
 
         if(!WinHttpReceiveResponse(hRequest, NULL))

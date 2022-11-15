@@ -9,7 +9,7 @@ namespace lxd {
 	std::wstring GetPathOfExe() {
         wchar_t filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
-        auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
+        std::ignore = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
         return filename;
 	}
 

@@ -315,7 +315,7 @@ bRead                       - Identified Read/Write
 ///////////////////////////////////////////////////////////////////////////////////////*/
 
 void AsyncFile::OnFileIOComplete(DWORD dwErrorCode,
-                                 DWORD dwNumberOfBytesTransfered,
+                                 DWORD /*dwNumberOfBytesTransfered*/,
                                  LPOVERLAPPED lpOverlapped, bool bRead) {
     if(0 == lpOverlapped)     {
         TRACE_STATUS(L"FileIOCompletionRoutine completed --> with POVERLAPPED NULL");
@@ -453,10 +453,10 @@ is signalled.
 ///////////////////////////////////////////////////////////////////////////////////////*/
 
 bool AsyncFile::WaitOnUIThread() {
-    for(;; )     {
+    while(true)     {
         DWORD dwWaitOvpOprn = MsgWaitForMultipleObjectsEx(1, &m_hIOCompleteEvent,
                                                           MAX_TIMEOUT, QS_ALLEVENTS, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
-        switch(dwWaitOvpOprn)         {
+        switch(dwWaitOvpOprn) {
             case WAIT_FAILED:
                 return false;
             case WAIT_OBJECT_0:
@@ -465,14 +465,13 @@ bool AsyncFile::WaitOnUIThread() {
                 return false;
         }
 
-        if(m_bAborted)         {
+        if(m_bAborted) {
             return false;
         }
 
         // Make the UI responsive, dispatch any message in the queue
         PumpMessage();
     }
-    return false;
 }
 
 /*//////////////////////////////////////////////////////////////////////////////////////
@@ -484,9 +483,9 @@ is signalled.
 ///////////////////////////////////////////////////////////////////////////////////////*/
 
 bool AsyncFile::NormalWait() {
-    for(; ; )     {
+    while(true) {
         DWORD dwWaitOvpOprn = WaitForSingleObjectEx(m_hIOCompleteEvent, MAX_TIMEOUT, true);
-        switch(dwWaitOvpOprn)         {
+        switch(dwWaitOvpOprn) {
             case WAIT_FAILED:
                 return false;
             case WAIT_OBJECT_0:
@@ -495,11 +494,10 @@ bool AsyncFile::NormalWait() {
                 return false;
         }
 
-        if(m_bAborted)         {
+        if(m_bAborted) {
             return false;
         }
     }
-    return false;
 }
 
 /*//////////////////////////////////////////////////////////////////////////////////////

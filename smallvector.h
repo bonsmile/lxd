@@ -12,11 +12,7 @@
  //===----------------------------------------------------------------------===//
 
 #pragma once
-#define LLVM_GSL_OWNER DLL_PUBLIC
-#define LLVM_ENABLE_EXCEPTIONS
-#define LLVM_LIKELY(x) (x)
-#define LLVM_UNLIKELY(x) (x)
-#include "defines.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -32,9 +28,12 @@
 #include <utility>
 #include <cstdint>
 #include <string>
-#ifdef LLVM_ENABLE_EXCEPTIONS
 #include <stdexcept>
-#endif
+
+#define LLVM_GSL_OWNER
+#define LLVM_ENABLE_EXCEPTIONS
+#define LLVM_LIKELY(x) (x)
+#define LLVM_UNLIKELY(x) (x)
 
 namespace llvm {
 
