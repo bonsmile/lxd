@@ -57,7 +57,6 @@ add_library( lxd SHARED
 	AsyncHttp.cpp
 	WinHTTPWrappers.h
 	smallvector.h
-	smallvector.cpp
 	map.h
 	map.cpp
 	glb.h
