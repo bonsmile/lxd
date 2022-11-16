@@ -70,6 +70,14 @@
 ///
 ///
 
+#ifndef _T
+    #ifdef UNICODE
+        #define _T(x)      L ## x
+    #else
+        #define _T(x)      x
+    #endif
+#endif
+
 #if defined _WIN32 || defined __CYGWIN__
 	// utf-16 on Windows
 	using Char = wchar_t;
