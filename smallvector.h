@@ -62,7 +62,7 @@ protected:
 
     SmallVectorBase() = delete;
     SmallVectorBase(void* FirstEl, size_t TotalCapacity)
-        : BeginX(FirstEl), Capacity(TotalCapacity) {}
+        : BeginX(FirstEl), Capacity((Size_T)TotalCapacity) {}
 
     /// This is a helper for \a grow() that's out of line to reduce code
     /// duplication.  This function will report a fatal error if it can't grow at
@@ -101,7 +101,7 @@ protected:
     /// This does not construct or destroy any elements in the vector.
     void set_size(size_t N) {
         assert(N <= capacity());
-        Size = N;
+        Size = (Size_T)N;
     }
 };
 
@@ -1486,7 +1486,7 @@ void SmallVectorBase<Size_T>::grow_pod(void* FirstEl, size_t MinSize,
     }
 
     this->BeginX = NewElts;
-    this->Capacity = NewCapacity;
+    this->Capacity = (Size_T)NewCapacity;
 }
 
 template class llvm::SmallVectorBase<uint32_t>;
