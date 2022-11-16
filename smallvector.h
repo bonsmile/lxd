@@ -30,6 +30,9 @@
 #include <string>
 #include <stdexcept>
 
+#pragma warning(push)
+#pragma warning(disable: 4324) // 由于对齐说明符，结构被填充
+
 #define LLVM_GSL_OWNER
 #define LLVM_ENABLE_EXCEPTIONS
 #define LLVM_LIKELY(x) (x)
@@ -1419,7 +1422,7 @@ static void report_at_maximum_capacity(size_t MaxSize) {
 
 // Note: Moving this function into the header may cause performance regression.
 template <class Size_T>
-static size_t getNewCapacity(size_t MinSize, size_t TSize, size_t OldCapacity) {
+static size_t getNewCapacity(size_t MinSize, size_t /*TSize*/, size_t OldCapacity) {
     constexpr size_t MaxSize = std::numeric_limits<Size_T>::max();
 
     // Ensure we can fit the new capacity.
@@ -1507,3 +1510,5 @@ static_assert(sizeof(SmallVectorSizeType<char>) == sizeof(uint32_t),
 #endif
 
 } // namespace llvm
+
+#pragma warning(pop)
