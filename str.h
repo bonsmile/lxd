@@ -4,6 +4,14 @@
 #include <vector>
 #include <string_view>
 
+#ifndef _T
+#ifdef UNICODE
+#define _T(x)      L ## x
+#else
+#define _T(x)      x
+#endif
+#endif
+
 namespace lxd {
 	DLL_PUBLIC void Upper(std::string& str);
 	DLL_PUBLIC void Upper(std::wstring& str);
