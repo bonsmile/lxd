@@ -27,9 +27,7 @@ set(SOURCE_STRINGS
 )
 source_group(strings FILES ${SOURCE_STRINGS})
 
-add_library( lxd SHARED
-	defines.h
-	${SOURCE_STRINGS}
+set(SRC_COMMON
 	debug.h
 	debug.cpp
 	encoding.h
@@ -38,35 +36,51 @@ add_library( lxd SHARED
 	fileio.cpp
 	timer.h
 	timer.cpp
-	http.h
-	http.cpp
 	base64.h
 	base64.cpp
-	crypt.h
-	crypt.cpp
-	json.h
-	threading.h
-	nanoseconds.h
 	str.h
 	str.cpp
 	utils.h
 	utils.cpp
-	AsyncFile.h
-	AsyncFile.cpp
-	AsyncHttp.h
-	AsyncHttp.cpp
-	WinHTTPWrappers.h
+	json.h
+	threading.h
+	nanoseconds.h
 	smallvector.h
 	map.h
 	map.cpp
 	glb.h
 	glb.cpp
-	${VERSION_RC}
 )
 
-target_compile_options( lxd PRIVATE "/utf-8" "/MP" "/W4" "/wd4251")
-target_compile_definitions( lxd PRIVATE -DBUILDING_DLL )
-target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
-target_compile_features( lxd PRIVATE cxx_std_20 )
-target_precompile_headers( lxd PUBLIC defines.h )
-target_link_libraries( lxd PUBLIC fmt::fmt-header-only Winhttp Bcrypt Pathcch)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	set(SRC_WIN32
+		http.h
+		http.cpp
+		crypt.h
+		crypt.cpp
+		AsyncFile.h
+		AsyncFile.cpp
+		AsyncHttp.h
+		AsyncHttp.cpp
+		WinHTTPWrappers.h
+	)
+else()
+	set(SRC_WIN32 "")
+endif()
+
+add_library( lxd SHARED
+	defines.h
+	${SOURCE_STRINGS}
+	${SRC_COMMON}
+	${SRC_WIN32}
+	${VERSION_RC}
+)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_compile_options(lxd PRIVATE "/utf-8" "/MP" "/W4" "/wd4251")
+	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
+	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
+endif()
+target_compile_definitions(lxd PRIVATE -DBUILDING_DLL)
+target_compile_features( lxd PRIVATE cxx_std_20)
+target_precompile_headers(lxd PUBLIC defines.h)
+target_link_libraries(lxd PUBLIC fmt::fmt-header-only)

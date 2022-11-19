@@ -1,14 +1,23 @@
 ﻿#include "fileio.h"
+#ifdef _WIN32
 #include <Windows.h>
 #include <fileapi.h>
 #include <pathcch.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
 #include <fmt/format.h>
 #include <cassert>
 #include <fmt/xchar.h>
 
 namespace lxd {
 	bool FileExists(const Char* path) {
+#ifdef _WIN32
 		return GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES;
+#else
+		return access(path, F_OK) == 0;
+#endif
 	}
 
 	bool openModeCanCreate(int openMode) {
@@ -18,6 +27,7 @@ namespace lxd {
 	}
 
 	void* OpenFile(const Char* path, int openMode) {
+#ifdef _WIN32
 		// All files are opened in share mode (both read and write).
 		DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 		int accessRights = 0;
@@ -48,13 +58,21 @@ namespace lxd {
 		}
 
 		return hFile;
+#else
+		return nullptr;
+#endif
 	}
 
 	bool CloseFile(void* handle) {
+#ifdef _WIN32
 		return CloseHandle(handle);
+#else
+		return false;
+#endif
 	}
 
 	bool WriteFile(const Char* path, char const* buffer, size_t bufferSize) {
+#ifdef _WIN32
 		// open the file
 		auto handle = OpenFile(path, OpenMode::WriteOnly | OpenMode::Truncate);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -73,9 +91,20 @@ namespace lxd {
 		}
 		CloseFile(handle);
 		return true;
+#else
+		bool ok = false;
+		FILE* file = fopen(path, "w");
+		if(file) {
+			if(fwrite(buffer, 1, bufferSize, file))
+				ok = true;
+		}
+		fclose(file);
+		return ok;
+#endif
 	}
 
 	std::string ReadFile(const Char* path) {
+#ifdef _WIN32
 		// open the file
 		auto handle = OpenFile(path, OpenMode::ReadOnly | OpenMode::ExistingOnly);
 		if(INVALID_HANDLE_VALUE == handle) {
@@ -97,17 +126,39 @@ namespace lxd {
 
 		CloseFile(handle);
 		return buffer;
+#else
+		std::string buffer;
+		FILE* file = fopen(path, "r");
+		if(file) {
+			struct stat info;
+			if(fstat(fileno(file), &info)) {
+				buffer.resize(info.st_size);
+				fread((void*)buffer.data(), buffer.size(), 1, file);
+			}
+		}
+		fclose(file);
+		return buffer;
+#endif
 	}
 
 	bool RemoveFile(const Char* path) {
+#ifdef _WIN32
 		return DeleteFile(path) != 0;
+#else
+		return remove(path) == 0;
+#endif
 	}
 
 	bool CreateDir(const Char* path) {
+#ifdef _WIN32
 		return ::CreateDirectoryW(path, nullptr);
+#else
+		return mkdir(path, S_IRWXU | S_IRWXG) == 0;
+#endif
 	}
 
 	bool CreateDirRecursive(const String& path) {
+#ifdef _WIN32
 		if (DirExists(path)) {
 			return true;
 		}
@@ -133,9 +184,13 @@ namespace lxd {
 		} while (searchOffset < path.size());
 
 		return true;
+#else
+		return false;
+#endif
 	}
 
 	int DeleteDir(StringView path, bool bDeleteSubdirectories) {
+#ifdef _WIN32
 		bool				bSubdirectory = false; // Flag, indicating whether
 												   // subdirectories have been found
 		HANDLE				hFile;                 // Handle to directory
@@ -194,14 +249,42 @@ namespace lxd {
 		}
 
 		return 0;
+#else
+		if(!bDeleteSubdirectories)
+			return rmdir(path.c_str()) == 0;
+		else {
+			
+		}
+		return -1;
+#endif
 	}
 
-	bool DirExists(std::wstring_view path) {
+	bool DirExists(StringView path) {
+#ifdef _WIN32
 		DWORD attrib = GetFileAttributesW(path.data());
 		return (attrib != INVALID_FILE_ATTRIBUTES) && (attrib & FILE_ATTRIBUTE_DIRECTORY);
+#else
+		struct stat statbuf;
+		bool isDir = false;
+
+		if(stat(path.c_str(), &statbuf) != -1) {
+			if(S_ISDIR(statbuf.st_mode)) {
+				isDir = true;
+			}
+		} else {
+			/*
+				here you might check errno for the reason, ENOENT will mean the path
+				was bad, ENOTDIR means part of the path is not a directory, EACCESS
+				would mean you can't access the path. Regardless, from the point of
+				view of your app, the path is not a directory if stat fails.
+			*/
+		}
+		return isDir;
+#endif
 	}
 
-	 bool ListDir(std::wstring_view path, std::vector<std::wstring>& result, bool recursive, const wchar_t* filter) {
+	 bool ListDir(StringView path, std::vector<String>& result, bool recursive, const Char* filter) {
+#ifdef _WIN32
 		auto searchPath = fmt::format(L"{}\\*", path);
 		WIN32_FIND_DATAW FindFileData;
 		HANDLE hFind = FindFirstFileW(searchPath.data(), &FindFileData);
@@ -248,9 +331,13 @@ namespace lxd {
 		FindClose(hFind);
 
 		return true;
+#else
+		 return false;
+#endif
 	 }
 
 	 String GetExePath() {
+#ifdef _WIN32
 		 // Retrieve fully qualified module pathname
 		 std::wstring buffer(MAX_PATH, 0);
 		 DWORD cbSize = ::GetModuleFileNameW(nullptr, buffer.data(),
@@ -265,9 +352,13 @@ namespace lxd {
 		 assert(S_OK == ok);
 		 buffer.resize(pEnd - buffer.data());
 		 return buffer;
+#else
+		 return {};
+#endif
 	 }
 
 	 File::File(const String& path, int mode) {
+#ifdef _WIN32
 		 assert(path.size() > 3); // D:\\1
 		 auto offset = path.find_last_of(L"\\");
 		 if(offset != std::wstring::npos) {
@@ -279,6 +370,9 @@ namespace lxd {
 		 // get file size
 		 bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
 		 assert(ok);
+#else
+
+#endif
 	 }
 
 	 File::~File() {
@@ -286,34 +380,51 @@ namespace lxd {
 	 }
 
 	 bool File::seek(long long distance, SeekMode mode, long long* newPtr) {
+#ifdef _WIN32
 		 _LARGE_INTEGER _distance;
 		 _distance.QuadPart = distance;
 		 return SetFilePointerEx(_handle, _distance, reinterpret_cast<PLARGE_INTEGER>(newPtr), mode);
+#else
+		 return false;
+#endif
 	 }
 
 	 bool File::read(void* buffer, unsigned long nNumberOfBytesToRead, unsigned long* lpNumberOfBytesRead) {
+#ifdef _WIN32
 		 return ::ReadFile(_handle, buffer, nNumberOfBytesToRead, lpNumberOfBytesRead, nullptr);
+#else
+		 return false;
+#endif
 	 }
 
 	 bool File::write(const void* buffer, size_t bufferSize) {
+#ifdef _WIN32
 		 DWORD bytesWritten = 0;
 		 if (::WriteFile(_handle, buffer, static_cast<DWORD>(bufferSize), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;
 			return true;
 		 }
 		return false;
+#else
+		 return false;
+#endif
 	 }
 
 	 bool File::write(std::string_view buffer) {
+#ifdef _WIN32
 		 DWORD bytesWritten = 0;
 		 if(::WriteFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;
 			 return true;
 		 }
 		 return false;
+#else
+		 return false;
+#endif
 	 }
 
 	 struct tm File::getLastWriteTime() {
+#ifdef
 		 FILETIME ftCreate, ftAccess, ftWrite;
 		 SYSTEMTIME stUTC, stLocal;
 
@@ -330,9 +441,13 @@ namespace lxd {
 			 stLocal.wDay, stLocal.wMonth - 1, stLocal.wYear - 1900, 
 			 stLocal.wDayOfWeek, 0, 0 
 		 };
+#else
+		 return {};
+#endif
 	 }
 
 	 bool File::isOlderThan(struct tm otherTM) {
+#ifdef _WIN32
 		 tm lastWT = getLastWriteTime();
 		 return lastWT.tm_year < otherTM.tm_year ||
 			 lastWT.tm_mon < otherTM.tm_mon ||
@@ -340,6 +455,8 @@ namespace lxd {
 			 lastWT.tm_hour < otherTM.tm_hour ||
 			 lastWT.tm_min < otherTM.tm_min ||
 			 lastWT.tm_sec < otherTM.tm_sec;
+#else
+		 return false;
+#endif
 	 }
-
 }

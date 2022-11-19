@@ -49,7 +49,7 @@ bool SimpleAtof(std::string_view str, float* out) {
       return false;
     }
   }
-  auto result = std::from_chars(str.data(), str.data() + str.size(), *out);
+  std::from_chars_result result = std::from_chars(str.data(), str.data() + str.size(), *out);
   if (result.ec == std::errc::invalid_argument) {
     return false;
   }

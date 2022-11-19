@@ -1,24 +1,43 @@
 ﻿#include "utils.h"
 #include <cassert>
+#ifdef _WIN32
 #include <Windows.h> // For Win32 API
 #include <Psapi.h>
 #include <shlobj_core.h>
 #include <PathCch.h>
+#else
+#include <unistd.h>
+#include <libproc.h>
+#endif
 
 namespace lxd {
-	std::wstring GetPathOfExe() {
-        wchar_t filename[MAX_PATH];
-        HANDLE process = GetCurrentProcess();
-        std::ignore = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
-        return filename;
-	}
-
-	std::wstring GetDirOfExe() {
-        wchar_t filename[MAX_PATH];
+    String GetDirOfExe() {
+#ifdef _WIN32
+        Char filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
         auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
         auto ok = PathCchRemoveFileSpec(filename, size);
         assert(ok == S_OK);
+        return filename;
+#else
+        int ret;
+        pid_t pid = getpid();
+        char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+        ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
+        if(ret <= 0) {
+            fprintf(stderr, "PID %d: proc_pidpath ();\n", pid);
+            fprintf(stderr, "    %s\n", strerror(errno));
+        } else {
+            printf("proc %d: %s\n", pid, pathbuf);
+        }
+        return String(pathbuf);
+#endif
+    }
+#ifdef _WIN32
+	std::wstring GetPathOfExe() {
+        Char filename[MAX_PATH];
+        HANDLE process = GetCurrentProcess();
+        std::ignore = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
         return filename;
 	}
 
@@ -100,4 +119,5 @@ namespace lxd {
 
         return result;
     }
+#endif
 }

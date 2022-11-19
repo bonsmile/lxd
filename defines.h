@@ -100,6 +100,8 @@
 #else
 	// utf-8 on UNIX
 	using Char = char;
+    using String = std::string;
+    using StringView = std::string_view;
 	#if __GNUC__ >= 4
 		#define DLL_PUBLIC __attribute__ ((visibility ("default")))
 		#define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
