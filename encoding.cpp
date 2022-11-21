@@ -1,8 +1,9 @@
 #include "encoding.h"
 #include <algorithm>
+#ifdef _WIN32
 #include <Windows.h>
 #include <stringapiset.h>
-
+#endif
 #define _______ "\0\0\0\0"
 static const char uri_encode_tbl[sizeof(int32_t) * 0x100] = {
     /*  0       1       2       3       4       5       6       7       8       9       a       b       c       d       e       f                        */
@@ -65,7 +66,9 @@ static const char kHexTable[513] =
 "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
 
 namespace lxd {
+#ifdef _WIN32
 	std::string utf8_encode(std::wstring_view wstr) {
+
 		if(wstr.empty()) return {};
 		int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
 		std::string strTo(size_needed, 0);
@@ -80,6 +83,7 @@ namespace lxd {
 		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 		return wstrTo;
 	}
+#endif
 
     size_t uri_encode(const char* src, const size_t len, char* dst) {
         size_t i = 0, j = 0;

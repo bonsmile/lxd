@@ -359,7 +359,7 @@ namespace lxd {
 		return true;
 	}
 
-	bool Glb::save(const std::wstring& path) {
+	bool Glb::save(const String& path) {
 		lxd::File file(path, lxd::WriteOnly | lxd::Truncate);
 		m_header.length = static_cast<uint32_t>(sizeof(Header));
 		for(const auto& chunk : m_chunks) {

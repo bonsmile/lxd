@@ -39,7 +39,9 @@
 #include <string>
 #include <type_traits>
 #include <cassert>
+#include <bit>
 #include "../defines.h"
+#include "int128.h"
 //#include "absl/base/config.h"
 //#include "absl/base/internal/endian.h"
 //#include "absl/base/macros.h"
@@ -60,7 +62,7 @@ namespace absl {
 // encountered, this function returns `false`, leaving `out` in an unspecified
 // state.
 template <typename int_type>
-bool SimpleAtoi(std::string_view str, int_type* out);
+DLL_PUBLIC bool SimpleAtoi(std::string_view str, int_type* out);
 
 // SimpleAtof()
 //
@@ -71,7 +73,7 @@ bool SimpleAtoi(std::string_view str, int_type* out);
 // allowed formats for `str`, except SimpleAtof() is locale-independent and will
 // always use the "C" locale. If any errors are encountered, this function
 // returns `false`, leaving `out` in an unspecified state.
-bool SimpleAtof(std::string_view str, float* out);
+DLL_PUBLIC bool SimpleAtof(std::string_view str, float* out);
 
 // SimpleAtod()
 //
@@ -82,7 +84,7 @@ bool SimpleAtof(std::string_view str, float* out);
 // allowed formats for `str`, except SimpleAtod is locale-independent and will
 // always use the "C" locale. If any errors are encountered, this function
 // returns `false`, leaving `out` in an unspecified state.
-bool SimpleAtod(std::string_view str, double* out);
+DLL_PUBLIC bool SimpleAtod(std::string_view str, double* out);
 
 // SimpleAtob()
 //
@@ -92,7 +94,7 @@ bool SimpleAtod(std::string_view str, double* out);
 // are interpreted as boolean `false`: "false", "f", "no", "n", "0". If any
 // errors are encountered, this function returns `false`, leaving `out` in an
 // unspecified state.
-bool SimpleAtob(std::string_view str, bool* out);
+DLL_PUBLIC bool SimpleAtob(std::string_view str, bool* out);
 
 // SimpleHexAtoi()
 //
@@ -108,10 +110,10 @@ template <typename int_type>
 bool SimpleHexAtoi(std::string_view str, int_type* out);
 
 // Overloads of SimpleHexAtoi() for 128 bit integers.
-//inline bool SimpleHexAtoi(std::string_view str,
-//                                               absl::int128* out);
-//inline bool SimpleHexAtoi(std::string_view str,
-//                                               absl::uint128* out);
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::int128* out);
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::uint128* out);
 
 //ABSL_NAMESPACE_END
 }  // namespace absl
@@ -144,12 +146,12 @@ inline void PutTwoDigits(size_t i, char* buf) {
 
 bool safe_strto32_base(std::string_view text, int32_t* value, int base);
 bool safe_strto64_base(std::string_view text, int64_t* value, int base);
-//bool safe_strto128_base(std::string_view text, absl::int128* value,
-//                         int base);
+bool safe_strto128_base(std::string_view text, absl::int128* value,
+                         int base);
 bool safe_strtou32_base(std::string_view text, uint32_t* value, int base);
 bool safe_strtou64_base(std::string_view text, uint64_t* value, int base);
-//bool safe_strtou128_base(std::string_view text, absl::uint128* value,
-//                         int base);
+bool safe_strtou128_base(std::string_view text, absl::uint128* value,
+                         int base);
 
 static const int kFastToBufferSize = 32;
 static const int kSixDigitsToBufferSize = 16;
@@ -273,30 +275,30 @@ bool SimpleAtoi(std::string_view str, int_type* out) {
   return numbers_internal::safe_strtoi_base(str, out, 10);
 }
 
-//inline bool SimpleAtoi(std::string_view str,
-//                                            absl::int128* out) {
-//  return numbers_internal::safe_strto128_base(str, out, 10);
-//}
-//
-//inline bool SimpleAtoi(std::string_view str,
-//                                            absl::uint128* out) {
-//  return numbers_internal::safe_strtou128_base(str, out, 10);
-//}
+inline bool SimpleAtoi(std::string_view str,
+                                            absl::int128* out) {
+  return numbers_internal::safe_strto128_base(str, out, 10);
+}
+
+inline bool SimpleAtoi(std::string_view str,
+                                            absl::uint128* out) {
+  return numbers_internal::safe_strtou128_base(str, out, 10);
+}
 
 template <typename int_type>
 bool SimpleHexAtoi(std::string_view str, int_type* out) {
   return numbers_internal::safe_strtoi_base(str, out, 16);
 }
 
-//inline bool SimpleHexAtoi(std::string_view str,
-//                                               absl::int128* out) {
-//  return numbers_internal::safe_strto128_base(str, out, 16);
-//}
-//
-//inline bool SimpleHexAtoi(std::string_view str,
-//                                               absl::uint128* out) {
-//  return numbers_internal::safe_strtou128_base(str, out, 16);
-//}
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::int128* out) {
+  return numbers_internal::safe_strto128_base(str, out, 16);
+}
+
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::uint128* out) {
+  return numbers_internal::safe_strtou128_base(str, out, 16);
+}
 
 //ABSL_NAMESPACE_END
 }  // namespace absl

@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <cctype>
 #include <regex>
-#include <charconv>
 #include <cwctype>
+#include "strings/charconv.h"
 
 namespace lxd {
 	void Upper(std::string& str) {
@@ -48,7 +48,7 @@ namespace lxd {
 		for(std::cregex_iterator iter(sv.data(), sv.data() + sv.size(), reg); iter != end; ++iter) {
 			float value;
 			std::string match = iter->str();
-			if(auto [p, ec] {std::from_chars(match.data(), match.data() + match.size(), value)}; ec == std::errc{}) {
+			if(auto [p, ec] {absl::from_chars(match.data(), match.data() + match.size(), value)}; ec == std::errc{}) {
 				result.push_back(value);
 			}
 		}

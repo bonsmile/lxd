@@ -22,7 +22,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-
+#include <bit>
 //#include "absl/base/optimization.h"
 //#include "absl/numeric/bits.h"
 

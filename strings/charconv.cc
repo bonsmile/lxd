@@ -19,6 +19,8 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <bit>
+#include "casts.h"
 #include "charconv_parse.h"
 #include "charconv_bigint.h"
 #include "int128.h"
@@ -162,7 +164,7 @@ struct FloatTraits<double> {
       assert(exponent == kMinNormalExponent);
     }
     dbl += mantissa;
-    return std::bit_cast<double>(dbl);
+    return absl::bit_cast<double>(dbl);
 #endif  // ABSL_BIT_PACK_FLOATS
   }
 };
@@ -214,7 +216,7 @@ struct FloatTraits<float> {
       assert(exponent == kMinNormalExponent);
     }
     flt += mantissa;
-    return std::bit_cast<float>(flt);
+    return absl::bit_cast<float>(flt);
 #endif  // ABSL_BIT_PACK_FLOATS
   }
 };
@@ -826,7 +828,7 @@ bool EiselLemire(const strings_internal::ParsedFloat& input, bool negative,
     if (negative) {
       ret_bits |= 0x8000000000000000u;
     }
-    *value = std::bit_cast<double>(ret_bits);
+    *value = bit_cast<double>(ret_bits);
     return true;
   } else if constexpr (FloatTraits<FloatType>::kTargetBits == 32) {
     uint32_t ret_bits = (static_cast<uint32_t>(ret_exp2) << 23) |
@@ -834,7 +836,7 @@ bool EiselLemire(const strings_internal::ParsedFloat& input, bool negative,
     if (negative) {
       ret_bits |= 0x80000000u;
     }
-    *value = std::bit_cast<float>(ret_bits);
+    *value = bit_cast<float>(ret_bits);
     return true;
   }
 #endif  // ABSL_BIT_PACK_FLOATS

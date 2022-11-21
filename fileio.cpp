@@ -251,7 +251,7 @@ namespace lxd {
 		return 0;
 #else
 		if(!bDeleteSubdirectories)
-			return rmdir(path.c_str()) == 0;
+			return rmdir(path.data()) == 0;
 		else {
 			
 		}
@@ -267,7 +267,7 @@ namespace lxd {
 		struct stat statbuf;
 		bool isDir = false;
 
-		if(stat(path.c_str(), &statbuf) != -1) {
+		if(stat(path.data(), &statbuf) != -1) {
 			if(S_ISDIR(statbuf.st_mode)) {
 				isDir = true;
 			}
