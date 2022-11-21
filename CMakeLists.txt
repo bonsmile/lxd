@@ -48,6 +48,8 @@ set(SRC_COMMON
 	timer.cpp
 	base64.h
 	base64.cpp
+	crypt.h
+	crypt.cpp
 	str.h
 	str.cpp
 	utils.h
@@ -66,8 +68,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(SRC_WIN32
 		http.h
 		http.cpp
-		crypt.h
-		crypt.cpp
 		AsyncFile.h
 		AsyncFile.cpp
 		AsyncHttp.h
