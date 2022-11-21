@@ -37,11 +37,16 @@ namespace lxd {
         time_t now;
         time(&now);
 
-        struct tm* local = localtime(&now);
+        tm local;
+#ifdef _MSC_VER
+        localtime_s(&local, &now);
+#else
+        localtime_s(&now, &local);
+#endif
 
         if(fmt == Default)
-            return fmt::format("{:%Y%m%d%H%M%S}", *local);
+            return fmt::format("{:%Y%m%d%H%M%S}", local);
         else
-            return fmt::format("{:%Y-%m-%d %H:%M:%S}", *local);
+            return fmt::format("{:%Y-%m-%d %H:%M:%S}", local);
     }
 }

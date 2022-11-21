@@ -35,6 +35,10 @@
 #include "match.h"
 #include "str_cat.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4996)
+#endif
+
 namespace absl {
 //ABSL_NAMESPACE_BEGIN
 

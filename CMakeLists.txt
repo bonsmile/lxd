@@ -66,7 +66,7 @@ add_library( lxd SHARED
 
 target_compile_options( lxd PRIVATE "/utf-8" "/MP" "/W4" "/wd4251")
 target_compile_definitions( lxd PRIVATE -DBUILDING_DLL )
-target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
+target_compile_definitions( lxd PRIVATE -DUNICODE -D_UNICODE )
 target_compile_features( lxd PRIVATE cxx_std_20 )
 target_precompile_headers( lxd PUBLIC defines.h )
 target_link_libraries( lxd PUBLIC fmt::fmt-header-only Winhttp Bcrypt Pathcch)
