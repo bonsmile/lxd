@@ -424,7 +424,7 @@ namespace lxd {
 	 }
 
 	 struct tm File::getLastWriteTime() {
-#ifdef
+#ifdef _WIN32
 		 FILETIME ftCreate, ftAccess, ftWrite;
 		 SYSTEMTIME stUTC, stLocal;
 

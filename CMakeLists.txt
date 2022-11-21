@@ -24,6 +24,16 @@ set(SOURCE_STRINGS
 	strings/str_cat.cc
 	strings/str_replace.h
 	strings/str_replace.cc
+	strings/int128.h
+	strings/int128.cc
+	strings/memutil.h
+	strings/memutil.cc
+	strings/charconv_bigint.h
+	strings/charconv_bigint.cc
+	strings/charconv_parse.h
+	strings/charconv_parse.cc
+	strings/charconv.h
+	strings/charconv.cc
 )
 source_group(strings FILES ${SOURCE_STRINGS})
 
