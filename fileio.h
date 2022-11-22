@@ -25,10 +25,15 @@ namespace lxd {
 		FileCurrent,
 		FileEnd
 	};
+
+	union Handle {
+		void* handle;
+		int fd;
+	};
 	
 	DLL_PUBLIC bool FileExists(const Char* path);
-	DLL_PUBLIC void* OpenFile(const Char* path, int mode);
-	DLL_PUBLIC bool CloseFile(void* handle);
+	DLL_PUBLIC Handle OpenFile(const Char* path, int mode);
+	DLL_PUBLIC bool CloseFile(Handle handle);
 	DLL_PUBLIC bool WriteFile(const Char* path, char const* buffer, size_t bufferSize);
 	DLL_PUBLIC std::string ReadFile(const Char* path);
 	DLL_PUBLIC bool RemoveFile(const Char* path);
@@ -43,7 +48,7 @@ namespace lxd {
 
 	class DLL_PUBLIC File {
 	public:
-		File(const String& path, int mode);
+		File(const StringView& path, int mode);
 		~File();
 		long long size() { return _size; }
 		bool seek(long long distance, SeekMode mode, long long* newPtr = nullptr);
@@ -53,7 +58,7 @@ namespace lxd {
 		struct tm getLastWriteTime();
 		bool isOlderThan(struct tm);
 	private:
-		void* _handle{};
+		Handle _handle{};
 		long long _size{};
 	};
 }

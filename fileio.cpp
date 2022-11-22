@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <ftw.h>
+#include <fts.h>
 #endif
 #include <fmt/format.h>
 #include <cassert>
@@ -28,7 +28,7 @@ namespace lxd {
 		return (openMode & OpenMode::WriteOnly) && !(openMode & OpenMode::ExistingOnly);
 	}
 
-	void* OpenFile(const Char* path, int openMode) {
+	Handle OpenFile(const Char* path, int openMode) {
 #ifdef _WIN32
 		// All files are opened in share mode (both read and write).
 		DWORD shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
@@ -72,16 +72,17 @@ namespace lxd {
 			accessRights |= O_TRUNC;
 		if(openMode & OpenMode::Append)
 			accessRights |= O_APPEND;
-		int fd = open(path, accessRights, S_IRUSR | S_IWUSR);
-		return reinterpret_cast<void*>(fd);
+		Handle handle;
+		handle.fd = open(path, accessRights, S_IRUSR | S_IWUSR);
+		return handle;
 #endif
 	}
 
-	bool CloseFile(void* handle) {
+	bool CloseFile(Handle handle) {
 #ifdef _WIN32
 		return CloseHandle(handle);
 #else
-		return close(intptr_t(handle)) == 0;
+		return close(handle.fd) == 0;
 #endif
 	}
 
@@ -368,7 +369,26 @@ namespace lxd {
 
 		return true;
 #else
-		 return false;
+		 // open
+		 char* pathes[] {(char*)path.data(), nullptr};
+		 FTS* fts = fts_open(pathes, FTS_PHYSICAL | FTS_NOCHDIR | FTS_XDEV, nullptr);
+		 if(!fts)
+			 return false;
+		 // iterate
+		 while(FTSENT* p = fts_read(fts)) {
+			 switch(p->fts_info) {
+				 case FTS_DP:
+					 break;
+				 case FTS_F:
+					 result.push_back(p->fts_path);
+					 break;
+				 case FTS_SL:
+				 case FTS_SLNONE:
+					 break;
+			 }
+		 }
+		 fts_close(fts);
+		 return true;
 #endif
 	 }
 
@@ -397,7 +417,7 @@ namespace lxd {
 #endif
 	 }
 
-	 File::File(const String& path, int mode) {
+	 File::File(const StringView& path, int mode) {
 #ifdef _WIN32
 		 assert(path.size() > 3); // D:\\1
 		 auto offset = path.find_last_of(L"\\");
@@ -411,7 +431,15 @@ namespace lxd {
 		 [[maybe_unused]] bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
 		 assert(ok);
 #else
-
+		 auto offset = path.find_last_of('/');
+		 if(offset != std::string_view::npos) {
+			 std::string dir(path.begin(), path.begin() + offset);
+			 CreateDirRecursive(dir);
+		 }
+		 _handle = OpenFile(path.data(), mode);
+		 struct stat st;
+		 stat(path.data(), &st);
+		 _size = st.st_size;
 #endif
 	 }
 
@@ -425,6 +453,7 @@ namespace lxd {
 		 _distance.QuadPart = distance;
 		 return SetFilePointerEx(_handle, _distance, reinterpret_cast<PLARGE_INTEGER>(newPtr), mode);
 #else
+
 		 return false;
 #endif
 	 }
@@ -433,7 +462,8 @@ namespace lxd {
 #ifdef _WIN32
 		 return ::ReadFile(_handle, buffer, nNumberOfBytesToRead, lpNumberOfBytesRead, nullptr);
 #else
-		 return false;
+		 *lpNumberOfBytesRead = ::read(_handle.fd, buffer, nNumberOfBytesToRead);
+		 return *lpNumberOfBytesRead > 0;
 #endif
 	 }
 
@@ -446,7 +476,7 @@ namespace lxd {
 		 }
 		return false;
 #else
-		 return false;
+		 return ::write(_handle.fd, buffer, bufferSize) > 0;
 #endif
 	 }
 
