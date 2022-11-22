@@ -6,6 +6,8 @@
 #else
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <ftw.h>
 #endif
 #include <fmt/format.h>
 #include <cassert>
@@ -59,7 +61,19 @@ namespace lxd {
 
 		return hFile;
 #else
-		return nullptr;
+		int accessRights = 0;
+		if(openMode & OpenMode::ReadOnly)
+			accessRights |= O_RDONLY;
+		if(openMode & OpenMode::WriteOnly)
+			accessRights |= O_WRONLY;
+		if(openMode & OpenMode::ReadWrite)
+			accessRights |= O_RDWR;
+		if(openMode & OpenMode::Truncate)
+			accessRights |= O_TRUNC;
+		if(openMode & OpenMode::Append)
+			accessRights |= O_APPEND;
+		int fd = open(path, accessRights, S_IRUSR | S_IWUSR);
+		return reinterpret_cast<void*>(fd);
 #endif
 	}
 
@@ -67,7 +81,7 @@ namespace lxd {
 #ifdef _WIN32
 		return CloseHandle(handle);
 #else
-		return false;
+		return close(intptr_t(handle)) == 0;
 #endif
 	}
 
@@ -185,7 +199,29 @@ namespace lxd {
 
 		return true;
 #else
-		return false;
+		if(DirExists(path))
+			return true;
+
+		if(path.empty())
+			return false;
+
+		size_t searchOffset = 0;
+		do {
+			auto tokenPos = path.find_first_of('/', searchOffset);
+			// treat the entire path as a folder if no folder separator not found
+			if(tokenPos == std::string::npos) {
+				tokenPos = path.size();
+			}
+
+			std::string subdir = path.substr(0, tokenPos);
+
+			if(!subdir.empty() && !DirExists(subdir.c_str()) && !CreateDir(subdir.c_str())) {
+				return false; // return error if failed creating dir
+			}
+			searchOffset = tokenPos + 1;
+		} while(searchOffset < path.size());
+
+		return true;
 #endif
 	}
 
@@ -353,6 +389,10 @@ namespace lxd {
 		 buffer.resize(pEnd - buffer.data());
 		 return buffer;
 #else
+		 char buffer[PATH_MAX];
+		 if(getcwd(buffer, PATH_MAX)) {
+			 return String(buffer);
+		 }
 		 return {};
 #endif
 	 }
