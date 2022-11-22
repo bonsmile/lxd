@@ -495,7 +495,7 @@ bool PostRequestTask::IsRequesting() {
 }
 
 HttpClient::HttpClient() {
-	HRESULT hr = _session.Initialize(L"WinHttpWrap", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS);
+	[[maybe_unused]] HRESULT hr = _session.Initialize(L"WinHttpWrap", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS);
 	assert(SUCCEEDED(hr));
 }
 

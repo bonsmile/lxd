@@ -16,7 +16,7 @@ namespace lxd {
         Char filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
         auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
-        auto ok = PathCchRemoveFileSpec(filename, size);
+        [[maybe_unused]] auto ok = PathCchRemoveFileSpec(filename, size);
         assert(ok == S_OK);
         return filename;
 #else
@@ -52,7 +52,7 @@ namespace lxd {
 
     std::wstring GetPathOfAppData() {
         PWSTR path = NULL;
-        HRESULT ok = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path);
+        [[maybe_unused]] HRESULT ok = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path);
         assert(S_OK == ok);
         std::wstring result(path);
         CoTaskMemFree(path);
@@ -76,7 +76,7 @@ namespace lxd {
     void SetEnv(std::wstring_view name, std::wstring_view value) {
         HKEY subKey;
         RegOpenKeyEx(HKEY_CURRENT_USER, L"Environment", 0, KEY_SET_VALUE, &subKey);
-        auto status = RegSetValueEx(subKey,
+        [[maybe_unused]] auto status = RegSetValueEx(subKey,
                                     name.data(),
                                     0,
                                     REG_SZ,

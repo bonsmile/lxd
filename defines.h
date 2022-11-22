@@ -37,8 +37,6 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include <iso646.h>
-
 #ifdef _LIBCPP_VERSION
     #define CORRADE_TARGET_LIBCXX
 #elif defined(__GLIBCXX__)
@@ -64,18 +62,6 @@
     #include <string>
 #endif
 
-#endif
-
-///
-///
-///
-
-#ifndef _T
-    #ifdef UNICODE
-        #define _T(x)      L ## x
-    #else
-        #define _T(x)      x
-    #endif
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__

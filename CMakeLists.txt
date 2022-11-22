@@ -87,7 +87,7 @@ add_library( lxd SHARED
 )
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_compile_options(lxd PRIVATE "/utf-8" "/MP" "/W4" "/wd4251")
-	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
+	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE)
 	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
 endif()
 target_compile_definitions(lxd PRIVATE -DBUILDING_DLL)

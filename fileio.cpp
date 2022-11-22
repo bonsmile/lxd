@@ -368,7 +368,7 @@ namespace lxd {
 		 _handle = OpenFile(path.data(), mode);
 		 assert(INVALID_HANDLE_VALUE != _handle);
 		 // get file size
-		 bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
+		 [[maybe_unused]] bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
 		 assert(ok);
 #else
 
@@ -429,7 +429,7 @@ namespace lxd {
 		 SYSTEMTIME stUTC, stLocal;
 
 		 // Retrieve the file times for the file.
-		 bool ok = GetFileTime(_handle, &ftCreate, &ftAccess, &ftWrite);
+		 [[maybe_unused]] bool ok = GetFileTime(_handle, &ftCreate, &ftAccess, &ftWrite);
 		 assert(ok);
 
 		 // Convert the last-write time to local time.

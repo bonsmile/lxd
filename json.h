@@ -411,7 +411,7 @@ Traverse DOM    2.6 GHz        2.6 GHz        2.1 GHz        2.1 GHz        2.1 
 #define KSJSON_H
 
 #ifdef _MSC_VER
-	#pragma warning( disable : 4201 )	// nonstandard extension used: nameless struct/union
+	#pragma warning( disable : 4201 4996 )	// nonstandard extension used: nameless struct/union
 #endif
 
 #include <stdio.h>
