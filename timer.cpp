@@ -5,6 +5,7 @@
 #else
 #include <unistd.h>
 #include <sys/time.h>
+#include <time.h>
 #endif
 
 namespace lxd {
@@ -64,7 +65,7 @@ namespace lxd {
 #ifdef _MSC_VER
         localtime_s(&local, &now);
 #else
-        localtime_s(&now, &local);
+        localtime_r(&now, &local);
 #endif
 
         if(fmt == Default)
