@@ -131,7 +131,7 @@ namespace lxd {
 		FILE* file = fopen(path, "r");
 		if(file) {
 			struct stat info;
-			if(fstat(fileno(file), &info)) {
+			if(fstat(fileno(file), &info) == 0) {
 				buffer.resize(info.st_size);
 				fread((void*)buffer.data(), buffer.size(), 1, file);
 			}

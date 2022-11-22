@@ -493,7 +493,10 @@ static int MemberIndexToMapIndex( int index )
 	}
 	return 0;
 #elif defined( __GNUC__ ) || defined( __clang__ )
-	return 32 - __builtin_clz( (unsigned int) index );
+	// TODO:
+	// __builtin_clz 参数为 0 返回值未定义
+	// 考虑使用 https://en.cppreference.com/w/cpp/numeric/countl_zero
+	return index == 0 ? 0 : 32 - __builtin_clz( (unsigned int) index );
 #else
 	int r = 0;
 	int t;
