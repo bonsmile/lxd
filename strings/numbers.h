@@ -61,8 +61,8 @@ namespace absl {
 // integer type (optionally preceded by a `+` or `-`). If any errors are
 // encountered, this function returns `false`, leaving `out` in an unspecified
 // state.
-template <typename int_type>
-DLL_PUBLIC bool SimpleAtoi(std::string_view str, int_type* out);
+//template <typename int_type>
+//DLL_PUBLIC bool SimpleAtoi(std::string_view str, int_type* out);
 
 // SimpleAtof()
 //
@@ -73,7 +73,7 @@ DLL_PUBLIC bool SimpleAtoi(std::string_view str, int_type* out);
 // allowed formats for `str`, except SimpleAtof() is locale-independent and will
 // always use the "C" locale. If any errors are encountered, this function
 // returns `false`, leaving `out` in an unspecified state.
-DLL_PUBLIC bool SimpleAtof(std::string_view str, float* out);
+//DLL_PUBLIC bool SimpleAtof(std::string_view str, float* out);
 
 // SimpleAtod()
 //

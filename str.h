@@ -19,5 +19,7 @@ namespace lxd {
 	DLL_PUBLIC void Lower(std::wstring& str);
 	DLL_PUBLIC std::string Lower(std::string_view str);
 	DLL_PUBLIC std::vector<std::string_view> Split(std::string_view src, std::string_view separate_character);
+#ifdef _WIN32 // 实现用到了 from_chars, clang 暂不支持
 	DLL_PUBLIC std::vector<float> ExtractNumbersFromString(std::string_view str);
+#endif
 }

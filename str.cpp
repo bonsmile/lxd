@@ -5,7 +5,9 @@
 #include <cctype>
 #include <regex>
 #include <cwctype>
-#include "strings/charconv.h"
+#ifdef _WIN32
+#include <charconv> // from_chars
+#endif
 
 namespace lxd {
 	void Upper(std::string& str) {
@@ -40,7 +42,7 @@ namespace lxd {
 
 		return output;
 	}
-
+#ifdef _WIN32
 	std::vector<float> ExtractNumbersFromString(std::string_view sv) {
 		std::regex reg(R"((-?(([1-9]\d*\.\d*)|(0\.\d*[1-9]\d*)))|(-?[1-9]\d*))");
 		const std::cregex_iterator end;
@@ -48,10 +50,11 @@ namespace lxd {
 		for(std::cregex_iterator iter(sv.data(), sv.data() + sv.size(), reg); iter != end; ++iter) {
 			float value;
 			std::string match = iter->str();
-			if(auto [p, ec] {absl::from_chars(match.data(), match.data() + match.size(), value)}; ec == std::errc{}) {
+			if(auto [p, ec] {std::from_chars(match.data(), match.data() + match.size(), value)}; ec == std::errc{}) {
 				result.push_back(value);
 			}
 		}
 		return result;
 	}
+#endif
 }

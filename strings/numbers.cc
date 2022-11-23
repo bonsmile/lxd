@@ -30,7 +30,6 @@
 #include <memory>
 #include <utility>
 #include "ascii.h"
-#include "charconv.h"
 #include "match.h"
 //#include "absl/base/attributes.h"
 //#include "absl/base/internal/raw_logging.h"
@@ -49,67 +48,67 @@
 namespace absl {
 //ABSL_NAMESPACE_BEGIN
 
-bool SimpleAtof(std::string_view str, float* out) {
-  *out = 0.0;
-  str = StripAsciiWhitespace(str);
-  // std::from_chars doesn't accept an initial +, but SimpleAtof does, so if one
-  // is present, skip it, while avoiding accepting "+-0" as valid.
-  if (!str.empty() && str[0] == '+') {
-    str.remove_prefix(1);
-    if (!str.empty() && str[0] == '-') {
-      return false;
-    }
-  }
-  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
-  if (result.ec == std::errc::invalid_argument) {
-    return false;
-  }
-  if (result.ptr != str.data() + str.size()) {
-    // not all non-whitespace characters consumed
-    return false;
-  }
-  // from_chars() with DR 3081's current wording will return max() on
-  // overflow.  SimpleAtof returns infinity instead.
-  if (result.ec == std::errc::result_out_of_range) {
-    if (*out > 1.0) {
-      *out = std::numeric_limits<float>::infinity();
-    } else if (*out < -1.0) {
-      *out = -std::numeric_limits<float>::infinity();
-    }
-  }
-  return true;
-}
+//bool SimpleAtof(std::string_view str, float* out) {
+//  *out = 0.0;
+//  str = StripAsciiWhitespace(str);
+//  // std::from_chars doesn't accept an initial +, but SimpleAtof does, so if one
+//  // is present, skip it, while avoiding accepting "+-0" as valid.
+//  if (!str.empty() && str[0] == '+') {
+//    str.remove_prefix(1);
+//    if (!str.empty() && str[0] == '-') {
+//      return false;
+//    }
+//  }
+//  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
+//  if (result.ec == std::errc::invalid_argument) {
+//    return false;
+//  }
+//  if (result.ptr != str.data() + str.size()) {
+//    // not all non-whitespace characters consumed
+//    return false;
+//  }
+//  // from_chars() with DR 3081's current wording will return max() on
+//  // overflow.  SimpleAtof returns infinity instead.
+//  if (result.ec == std::errc::result_out_of_range) {
+//    if (*out > 1.0) {
+//      *out = std::numeric_limits<float>::infinity();
+//    } else if (*out < -1.0) {
+//      *out = -std::numeric_limits<float>::infinity();
+//    }
+//  }
+//  return true;
+//}
 
-bool SimpleAtod(std::string_view str, double* out) {
-  *out = 0.0;
-  str = StripAsciiWhitespace(str);
-  // std::from_chars doesn't accept an initial +, but SimpleAtod does, so if one
-  // is present, skip it, while avoiding accepting "+-0" as valid.
-  if (!str.empty() && str[0] == '+') {
-    str.remove_prefix(1);
-    if (!str.empty() && str[0] == '-') {
-      return false;
-    }
-  }
-  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
-  if (result.ec == std::errc::invalid_argument) {
-    return false;
-  }
-  if (result.ptr != str.data() + str.size()) {
-    // not all non-whitespace characters consumed
-    return false;
-  }
-  // from_chars() with DR 3081's current wording will return max() on
-  // overflow.  SimpleAtod returns infinity instead.
-  if (result.ec == std::errc::result_out_of_range) {
-    if (*out > 1.0) {
-      *out = std::numeric_limits<double>::infinity();
-    } else if (*out < -1.0) {
-      *out = -std::numeric_limits<double>::infinity();
-    }
-  }
-  return true;
-}
+//bool SimpleAtod(std::string_view str, double* out) {
+//  *out = 0.0;
+//  str = StripAsciiWhitespace(str);
+//  // std::from_chars doesn't accept an initial +, but SimpleAtod does, so if one
+//  // is present, skip it, while avoiding accepting "+-0" as valid.
+//  if (!str.empty() && str[0] == '+') {
+//    str.remove_prefix(1);
+//    if (!str.empty() && str[0] == '-') {
+//      return false;
+//    }
+//  }
+//  auto result = absl::from_chars(str.data(), str.data() + str.size(), *out);
+//  if (result.ec == std::errc::invalid_argument) {
+//    return false;
+//  }
+//  if (result.ptr != str.data() + str.size()) {
+//    // not all non-whitespace characters consumed
+//    return false;
+//  }
+//  // from_chars() with DR 3081's current wording will return max() on
+//  // overflow.  SimpleAtod returns infinity instead.
+//  if (result.ec == std::errc::result_out_of_range) {
+//    if (*out > 1.0) {
+//      *out = std::numeric_limits<double>::infinity();
+//    } else if (*out < -1.0) {
+//      *out = -std::numeric_limits<double>::infinity();
+//    }
+//  }
+//  return true;
+//}
 
 bool SimpleAtob(std::string_view str, bool* out) {
   assert(out != nullptr);
