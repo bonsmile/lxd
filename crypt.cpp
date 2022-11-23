@@ -1,13 +1,16 @@
 #include "crypt.h"
-#include <Windows.h>
 #include "debug.h"
+#ifdef _WIN32
+#include <Windows.h>
 #include <bcrypt.h>
-
 #define NT_SUCCESS(Status)          (((NTSTATUS)(Status)) >= 0)
 #define STATUS_UNSUCCESSFUL         ((NTSTATUS)0xC0000001L)
+#endif
+
 
 namespace lxd {
 	std::vector<unsigned char> hash(HashAlgorithm algorithm, const char* message, size_t msgSize, const char* key, size_t keySize) {
+#ifdef _WIN32
         BCRYPT_ALG_HANDLE       hAlg = NULL;
         BCRYPT_HASH_HANDLE      hHash = NULL;
         NTSTATUS                status = STATUS_UNSUCCESSFUL;
@@ -118,5 +121,9 @@ Cleanup:
             HeapFree(GetProcessHeap(), 0, pbHash);
         }
 		return result;
+#else
+        // TODO
+        return {};
+#endif
 	}
 }

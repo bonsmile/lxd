@@ -332,10 +332,10 @@ DLL_PUBLIC void AppendPieces(std::string* dest,
   return std::string(a.data(), a.size());
 }
 
-DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b);
-DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC std::string StrCat(const AlphaNum& a, const AlphaNum& b);
+DLL_PUBLIC std::string StrCat(const AlphaNum& a, const AlphaNum& b,
                                         const AlphaNum& c);
-DLL_PUBLIC [[nodiscard]] std::string StrCat(const AlphaNum& a, const AlphaNum& b,
+DLL_PUBLIC std::string StrCat(const AlphaNum& a, const AlphaNum& b,
                                         const AlphaNum& c, const AlphaNum& d);
 
 // Support 5 or more arguments

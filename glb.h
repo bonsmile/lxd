@@ -49,7 +49,7 @@ namespace lxd {
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
 		bool createFromPolygonSoup(const std::vector<MyVec3>& points);
-		bool save(const std::wstring& path);
+		bool save(const String& path);
 		std::vector<uint8_t> searialize();
 		//
 		std::span<MyVec3> getPositions();

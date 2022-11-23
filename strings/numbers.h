@@ -23,30 +23,100 @@
 #ifndef ABSL_STRINGS_NUMBERS_H_
 #define ABSL_STRINGS_NUMBERS_H_
 
-#ifdef __SSE4_2__
-#include <x86intrin.h>
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
+
+#ifdef _MSC_VER
+#include <intrin.h>
 #endif
 
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <cassert>
 #include <limits>
 #include <string>
 #include <type_traits>
-#include <string_view>
+#include <cassert>
 #include <bit>
-//#include "absl/base/config.h"
-#ifdef __SSE4_2__
-// TODO(jorg): Remove this when we figure out the right way
-// to swap bytes on SSE 4.2 that works with the compilers
-// we claim to support.  Also, add tests for the compiler
-// that doesn't support the Intel _bswap64 intrinsic but
-// does support all the SSE 4.2 intrinsics
-#include "absl/base/internal/endian.h"
-#endif
 #include "../defines.h"
+#include "int128.h"
+//#include "absl/base/config.h"
+//#include "absl/base/internal/endian.h"
+//#include "absl/base/macros.h"
+//#include "absl/base/port.h"
+//#include "absl/numeric/bits.h"
+//#include "absl/numeric/int128.h"
+//#include "absl/strings/string_view.h"
+
+namespace absl {
+//ABSL_NAMESPACE_BEGIN
+
+// SimpleAtoi()
+//
+// Converts the given string (optionally followed or preceded by ASCII
+// whitespace) into an integer value, returning `true` if successful. The string
+// must reflect a base-10 integer whose value falls within the range of the
+// integer type (optionally preceded by a `+` or `-`). If any errors are
+// encountered, this function returns `false`, leaving `out` in an unspecified
+// state.
+//template <typename int_type>
+//DLL_PUBLIC bool SimpleAtoi(std::string_view str, int_type* out);
+
+// SimpleAtof()
+//
+// Converts the given string (optionally followed or preceded by ASCII
+// whitespace) into a float, which may be rounded on overflow or underflow,
+// returning `true` if successful.
+// See https://en.cppreference.com/w/c/string/byte/strtof for details about the
+// allowed formats for `str`, except SimpleAtof() is locale-independent and will
+// always use the "C" locale. If any errors are encountered, this function
+// returns `false`, leaving `out` in an unspecified state.
+//DLL_PUBLIC bool SimpleAtof(std::string_view str, float* out);
+
+// SimpleAtod()
+//
+// Converts the given string (optionally followed or preceded by ASCII
+// whitespace) into a double, which may be rounded on overflow or underflow,
+// returning `true` if successful.
+// See https://en.cppreference.com/w/c/string/byte/strtof for details about the
+// allowed formats for `str`, except SimpleAtod is locale-independent and will
+// always use the "C" locale. If any errors are encountered, this function
+// returns `false`, leaving `out` in an unspecified state.
+DLL_PUBLIC bool SimpleAtod(std::string_view str, double* out);
+
+// SimpleAtob()
+//
+// Converts the given string into a boolean, returning `true` if successful.
+// The following case-insensitive strings are interpreted as boolean `true`:
+// "true", "t", "yes", "y", "1". The following case-insensitive strings
+// are interpreted as boolean `false`: "false", "f", "no", "n", "0". If any
+// errors are encountered, this function returns `false`, leaving `out` in an
+// unspecified state.
+DLL_PUBLIC bool SimpleAtob(std::string_view str, bool* out);
+
+// SimpleHexAtoi()
+//
+// Converts a hexadecimal string (optionally followed or preceded by ASCII
+// whitespace) to an integer, returning `true` if successful. Only valid base-16
+// hexadecimal integers whose value falls within the range of the integer type
+// (optionally preceded by a `+` or `-`) can be converted. A valid hexadecimal
+// value may include both upper and lowercase character symbols, and may
+// optionally include a leading "0x" (or "0X") number prefix, which is ignored
+// by this function. If any errors are encountered, this function returns
+// `false`, leaving `out` in an unspecified state.
+template <typename int_type>
+bool SimpleHexAtoi(std::string_view str, int_type* out);
+
+// Overloads of SimpleHexAtoi() for 128 bit integers.
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::int128* out);
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::uint128* out);
+
+//ABSL_NAMESPACE_END
+}  // namespace absl
 
 // End of public API.  Implementation details follow.
 
@@ -72,6 +142,17 @@ inline void PutTwoDigits(size_t i, char* buf) {
   memcpy(buf, two_ASCII_digits[i], 2);
 }
 
+// safe_strto?() functions for implementing SimpleAtoi()
+
+bool safe_strto32_base(std::string_view text, int32_t* value, int base);
+bool safe_strto64_base(std::string_view text, int64_t* value, int base);
+bool safe_strto128_base(std::string_view text, absl::int128* value,
+                         int base);
+bool safe_strtou32_base(std::string_view text, uint32_t* value, int base);
+bool safe_strtou64_base(std::string_view text, uint64_t* value, int base);
+bool safe_strtou128_base(std::string_view text, absl::uint128* value,
+                         int base);
+
 static const int kFastToBufferSize = 32;
 static const int kSixDigitsToBufferSize = 16;
 
@@ -86,10 +167,10 @@ DLL_PUBLIC size_t SixDigitsToBuffer(double d, char* buffer);
 // These functions are intended for speed. All functions take an output buffer
 // as an argument and return a pointer to the last byte they wrote, which is the
 // terminating '\0'. At most `kFastToBufferSize` bytes are written.
-DLL_PUBLIC char* FastIntToBuffer(int32_t, char*);
-DLL_PUBLIC char* FastIntToBuffer(uint32_t, char*);
-DLL_PUBLIC char* FastIntToBuffer(int64_t, char*);
-DLL_PUBLIC char* FastIntToBuffer(uint64_t, char*);
+char* FastIntToBuffer(int32_t, char*);
+char* FastIntToBuffer(uint32_t, char*);
+char* FastIntToBuffer(int64_t, char*);
+char* FastIntToBuffer(uint64_t, char*);
 
 // For enums and integer types that are not an exact match for the types above,
 // use templates to call the appropriate one of the four overloads above.
@@ -100,19 +181,62 @@ char* FastIntToBuffer(int_type i, char* buffer) {
   // TODO(jorg): This signed-ness check is used because it works correctly
   // with enums, and it also serves to check that int_type is not a pointer.
   // If one day something like std::is_signed<enum E> works, switch to it.
-  if constexpr (static_cast<int_type>(1) - 2 < 0) {  // Signed
-    if constexpr (sizeof(i) > 32 / 8) {           // 33-bit to 64-bit
+  // These conditions are constexpr bools to suppress MSVC warning C4127.
+  constexpr bool kIsSigned = static_cast<int_type>(1) - 2 < 0;
+  constexpr bool kUse64Bit = sizeof(i) > 32 / 8;
+  if (kIsSigned) {
+    if (kUse64Bit) {
       return FastIntToBuffer(static_cast<int64_t>(i), buffer);
-    } else {  // 32-bit or less
+    } else {
       return FastIntToBuffer(static_cast<int32_t>(i), buffer);
     }
-  } else {                     // Unsigned
-    if constexpr (sizeof(i) > 32 / 8) {  // 33-bit to 64-bit
+  } else {
+    if (kUse64Bit) {
       return FastIntToBuffer(static_cast<uint64_t>(i), buffer);
-    } else {  // 32-bit or less
+    } else {
       return FastIntToBuffer(static_cast<uint32_t>(i), buffer);
     }
   }
+}
+
+// Implementation of SimpleAtoi, generalized to support arbitrary base (used
+// with base different from 10 elsewhere in Abseil implementation).
+template <typename int_type>
+bool safe_strtoi_base(std::string_view s, int_type* out,
+                                           int base) {
+  static_assert(sizeof(*out) == 4 || sizeof(*out) == 8,
+                "SimpleAtoi works only with 32-bit or 64-bit integers.");
+  static_assert(!std::is_floating_point<int_type>::value,
+                "Use SimpleAtof or SimpleAtod instead.");
+  bool parsed;
+  // TODO(jorg): This signed-ness check is used because it works correctly
+  // with enums, and it also serves to check that int_type is not a pointer.
+  // If one day something like std::is_signed<enum E> works, switch to it.
+  // These conditions are constexpr bools to suppress MSVC warning C4127.
+  constexpr bool kIsSigned = static_cast<int_type>(1) - 2 < 0;
+  constexpr bool kUse64Bit = sizeof(*out) == 64 / 8;
+  if (kIsSigned) {
+    if (kUse64Bit) {
+      int64_t val;
+      parsed = numbers_internal::safe_strto64_base(s, &val, base);
+      *out = static_cast<int_type>(val);
+    } else {
+      int32_t val;
+      parsed = numbers_internal::safe_strto32_base(s, &val, base);
+      *out = static_cast<int_type>(val);
+    }
+  } else {
+    if (kUse64Bit) {
+      uint64_t val;
+      parsed = numbers_internal::safe_strtou64_base(s, &val, base);
+      *out = static_cast<int_type>(val);
+    } else {
+      uint32_t val;
+      parsed = numbers_internal::safe_strtou32_base(s, &val, base);
+      *out = static_cast<int_type>(val);
+    }
+  }
+  return parsed;
 }
 
 // FastHexToBufferZeroPad16()
@@ -122,7 +246,7 @@ char* FastIntToBuffer(int_type i, char* buffer) {
 // Returns the number of non-pad digits of the output (it can never be zero
 // since 0 has one digit).
 inline size_t FastHexToBufferZeroPad16(uint64_t val, char* out) {
-#ifdef __SSE4_2__
+#ifdef ABSL_INTERNAL_HAVE_SSSE3
   uint64_t be = absl::big_endian::FromHost64(val);
   const auto kNibbleMask = _mm_set1_epi8(0xf);
   const auto kHexDigits = _mm_setr_epi8('0', '1', '2', '3', '4', '5', '6', '7',
@@ -141,10 +265,40 @@ inline size_t FastHexToBufferZeroPad16(uint64_t val, char* out) {
   }
 #endif
   // | 0x1 so that even 0 has 1 digit.
-  return 16 - std::countl_zero(val | 0x1) / 4;
+  return 16 - static_cast<size_t>(std::countl_zero(val | 0x1) / 4);
 }
 
 }  // namespace numbers_internal
+
+template <typename int_type>
+bool SimpleAtoi(std::string_view str, int_type* out) {
+  return numbers_internal::safe_strtoi_base(str, out, 10);
+}
+
+inline bool SimpleAtoi(std::string_view str,
+                                            absl::int128* out) {
+  return numbers_internal::safe_strto128_base(str, out, 10);
+}
+
+inline bool SimpleAtoi(std::string_view str,
+                                            absl::uint128* out) {
+  return numbers_internal::safe_strtou128_base(str, out, 10);
+}
+
+template <typename int_type>
+bool SimpleHexAtoi(std::string_view str, int_type* out) {
+  return numbers_internal::safe_strtoi_base(str, out, 16);
+}
+
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::int128* out) {
+  return numbers_internal::safe_strto128_base(str, out, 16);
+}
+
+inline bool SimpleHexAtoi(std::string_view str,
+                                               absl::uint128* out) {
+  return numbers_internal::safe_strtou128_base(str, out, 16);
+}
 
 //ABSL_NAMESPACE_END
 }  // namespace absl

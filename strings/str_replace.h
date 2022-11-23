@@ -66,7 +66,7 @@ namespace absl {
 //        {"$who", "Bob"},
 //        {"#Noun", "Apples"}});
 //   EXPECT_EQ("Bob bought 5 Apples. Thanks Bob!", s);
-DLL_PUBLIC [[nodiscard]] std::string StrReplaceAll(
+DLL_PUBLIC std::string StrReplaceAll(
     std::string_view s,
     std::initializer_list<std::pair<std::string_view, std::string_view>>
         replacements);

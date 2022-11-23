@@ -1,8 +1,6 @@
 #pragma once
 
 #include "defines.h"
-#include <cstdint>
-#include <string>
 
 namespace lxd {
 	DLL_PUBLIC void sleep(int milliseconds);
