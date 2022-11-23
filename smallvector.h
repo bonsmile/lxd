@@ -1375,14 +1375,14 @@ struct Struct32B {
 static_assert(sizeof(SmallVector<void*, 0>) ==
     sizeof(unsigned) * 2 + sizeof(void*),
     "wasted space in SmallVector size 0");
-/*static_assert(alignof(SmallVector<Struct16B, 0>) >= alignof(Struct16B),
+static_assert(alignof(SmallVector<Struct16B, 0>) >= alignof(Struct16B),
     "wrong alignment for 16-byte aligned T");
 static_assert(alignof(SmallVector<Struct32B, 0>) >= alignof(Struct32B),
     "wrong alignment for 32-byte aligned T");
 static_assert(sizeof(SmallVector<Struct16B, 0>) >= alignof(Struct16B),
     "missing padding for 16-byte aligned T");
 static_assert(sizeof(SmallVector<Struct32B, 0>) >= alignof(Struct32B),
-    "missing padding for 32-byte aligned T");*/
+    "missing padding for 32-byte aligned T");
 static_assert(sizeof(SmallVector<void*, 1>) ==
     sizeof(unsigned) * 2 + sizeof(void*) * 2,
     "wasted space in SmallVector size 1");
