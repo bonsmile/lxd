@@ -87,7 +87,8 @@ AsyncFile::AsyncFile(const wchar_t* lpctszFileName, bool bCreate,
     }
     if(0 != lpctszFileName)     {
         if(lxd::FileExists(lpctszFileName)) {
-            m_hAsyncFile = lxd::OpenFile(lpctszFileName, lxd::WriteOnly | lxd::Append);
+            lxd::Handle handle = lxd::OpenFile(lpctszFileName, lxd::WriteOnly | lxd::Append);
+            m_hAsyncFile = handle.handle;
         } else {
             m_hAsyncFile = CreateFile(lpctszFileName, dwDesiredAccess, dwShareMode, 0, dwCreateMode,
                                       FILE_FLAG_OVERLAPPED, 0);

@@ -58,8 +58,9 @@ namespace lxd {
 			SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
 			SetEndOfFile(hFile);
 		}
-
-		return hFile;
+		Handle handle;
+		handle.handle = hFile;
+		return handle;
 #else
 		int accessRights = 0;
 		if(openMode & OpenMode::ReadOnly)
@@ -80,7 +81,7 @@ namespace lxd {
 
 	bool CloseFile(Handle handle) {
 #ifdef _WIN32
-		return CloseHandle(handle);
+		return CloseHandle(handle.handle);
 #else
 		return close(handle.fd) == 0;
 #endif
@@ -89,19 +90,19 @@ namespace lxd {
 	bool WriteFile(const Char* path, char const* buffer, size_t bufferSize) {
 #ifdef _WIN32
 		// open the file
-		auto handle = OpenFile(path, OpenMode::WriteOnly | OpenMode::Truncate);
-		if(INVALID_HANDLE_VALUE == handle) {
+		Handle handle = OpenFile(path, OpenMode::WriteOnly | OpenMode::Truncate);
+		if(INVALID_HANDLE_VALUE == handle.handle) {
 			return false;
 		}
 		// get file size
 		LARGE_INTEGER size;
-		if(!GetFileSizeEx(handle, &size)) {
-			CloseHandle(handle);
+		if(!GetFileSizeEx(handle.handle, &size)) {
+			CloseHandle(handle.handle);
 			return false;
 		}
 		// write
-		if(!::WriteFile(handle, buffer, static_cast<DWORD>(bufferSize), nullptr, nullptr)) {
-			CloseHandle(handle);
+		if(!::WriteFile(handle.handle, buffer, static_cast<DWORD>(bufferSize), nullptr, nullptr)) {
+			CloseHandle(handle.handle);
 			return false;
 		}
 		CloseFile(handle);
@@ -121,21 +122,21 @@ namespace lxd {
 	std::string ReadFile(const Char* path) {
 #ifdef _WIN32
 		// open the file
-		auto handle = OpenFile(path, OpenMode::ReadOnly | OpenMode::ExistingOnly);
-		if(INVALID_HANDLE_VALUE == handle) {
+		Handle handle = OpenFile(path, OpenMode::ReadOnly | OpenMode::ExistingOnly);
+		if(INVALID_HANDLE_VALUE == handle.handle) {
 			return {};
 		}
 		// get file size
 		LARGE_INTEGER size;
-		if(!GetFileSizeEx(handle, &size)) {
-			CloseHandle(handle);
+		if(!GetFileSizeEx(handle.handle, &size)) {
+			CloseHandle(handle.handle);
 			return {};
 		}
 		// read
 		std::string buffer;
 		buffer.resize(size.QuadPart);
-		if(!::ReadFile(handle, buffer.data(), static_cast<DWORD>(buffer.size()), nullptr, nullptr)) {
-			CloseHandle(handle);
+		if(!::ReadFile(handle.handle, buffer.data(), static_cast<DWORD>(buffer.size()), nullptr, nullptr)) {
+			CloseHandle(handle.handle);
 			return {};
 		}
 
@@ -422,13 +423,13 @@ namespace lxd {
 		 assert(path.size() > 3); // D:\\1
 		 auto offset = path.find_last_of(L"\\");
 		 if(offset != std::wstring::npos) {
-			 auto middleDir = path.substr(0, offset);
+			 std::wstring middleDir(path.begin(), path.begin() + offset);
 			 CreateDirRecursive(middleDir);
 		 }
 		 _handle = OpenFile(path.data(), mode);
-		 assert(INVALID_HANDLE_VALUE != _handle);
+		 assert(INVALID_HANDLE_VALUE != _handle.handle);
 		 // get file size
-		 [[maybe_unused]] bool ok = GetFileSizeEx(_handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
+		 [[maybe_unused]] bool ok = GetFileSizeEx(_handle.handle, reinterpret_cast<PLARGE_INTEGER>(&_size));
 		 assert(ok);
 #else
 		 auto offset = path.find_last_of('/');
@@ -451,7 +452,7 @@ namespace lxd {
 #ifdef _WIN32
 		 _LARGE_INTEGER _distance;
 		 _distance.QuadPart = distance;
-		 return SetFilePointerEx(_handle, _distance, reinterpret_cast<PLARGE_INTEGER>(newPtr), mode);
+		 return SetFilePointerEx(_handle.handle, _distance, reinterpret_cast<PLARGE_INTEGER>(newPtr), mode);
 #else
 
 		 return false;
@@ -460,7 +461,7 @@ namespace lxd {
 
 	 bool File::read(void* buffer, unsigned long nNumberOfBytesToRead, unsigned long* lpNumberOfBytesRead) {
 #ifdef _WIN32
-		 return ::ReadFile(_handle, buffer, nNumberOfBytesToRead, lpNumberOfBytesRead, nullptr);
+		 return ::ReadFile(_handle.handle, buffer, nNumberOfBytesToRead, lpNumberOfBytesRead, nullptr);
 #else
 		 *lpNumberOfBytesRead = ::read(_handle.fd, buffer, nNumberOfBytesToRead);
 		 return *lpNumberOfBytesRead > 0;
@@ -470,7 +471,7 @@ namespace lxd {
 	 bool File::write(const void* buffer, size_t bufferSize) {
 #ifdef _WIN32
 		 DWORD bytesWritten = 0;
-		 if (::WriteFile(_handle, buffer, static_cast<DWORD>(bufferSize), &bytesWritten, nullptr)) {
+		 if (::WriteFile(_handle.handle, buffer, static_cast<DWORD>(bufferSize), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;
 			return true;
 		 }
@@ -483,7 +484,7 @@ namespace lxd {
 	 bool File::write(std::string_view buffer) {
 #ifdef _WIN32
 		 DWORD bytesWritten = 0;
-		 if(::WriteFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesWritten, nullptr)) {
+		 if(::WriteFile(_handle.handle, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesWritten, nullptr)) {
 			 _size += bytesWritten;
 			 return true;
 		 }
@@ -499,7 +500,7 @@ namespace lxd {
 		 SYSTEMTIME stUTC, stLocal;
 
 		 // Retrieve the file times for the file.
-		 [[maybe_unused]] bool ok = GetFileTime(_handle, &ftCreate, &ftAccess, &ftWrite);
+		 [[maybe_unused]] bool ok = GetFileTime(_handle.handle, &ftCreate, &ftAccess, &ftWrite);
 		 assert(ok);
 
 		 // Convert the last-write time to local time.
