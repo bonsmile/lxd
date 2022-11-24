@@ -42,7 +42,7 @@
 //#include "absl/strings/str_cat.h"
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4996)
+#pragma warning(disable: 4996 4244)
 #endif
 
 namespace absl {
