@@ -7,6 +7,12 @@
 
 namespace lxd {
 	DLL_PUBLIC String GetDirOfExe();
+	enum MsgType {
+		Info,
+		Warn,
+		Error
+	};
+	DLL_PUBLIC void MsgBox(MsgType msgType, const Char* title, const Char* message);
 #ifdef _WIN32
 	DLL_PUBLIC std::wstring GetPathOfExe();
 	DLL_PUBLIC std::wstring GetExeName();

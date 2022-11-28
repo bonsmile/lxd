@@ -33,6 +33,35 @@ namespace lxd {
         return String(pathbuf);
 #endif
     }
+
+    void MsgBox(MsgType msgType, const Char* title, const Char* message) {
+#ifdef _WIN32
+        UINT type = MB_OK;
+        switch(msgType)
+        {
+            case lxd::Info:
+                type |= MB_ICONINFORMATION;
+                break;
+            case lxd::Warn:
+                type |= MB_ICONWARNING;
+                break;
+            case lxd::Error:
+                type |= MB_ICONERROR;
+                break;
+            default:
+                break;
+        }
+        int msgboxID = MessageBox(
+            NULL,
+            (LPCWSTR)message,
+            (LPCWSTR)title,
+            type
+        );
+#else
+        // TODO: https://developer.apple.com/documentation/corefoundation/cfusernotification?language=objc
+#endif
+    }
+
 #ifdef _WIN32
 	std::wstring GetPathOfExe() {
         Char filename[MAX_PATH];
