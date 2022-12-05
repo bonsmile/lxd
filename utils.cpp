@@ -51,7 +51,7 @@ namespace lxd {
             default:
                 break;
         }
-        int msgboxID = MessageBox(
+        MessageBox(
             NULL,
             (LPCWSTR)message,
             (LPCWSTR)title,
