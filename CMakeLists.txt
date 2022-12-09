@@ -70,7 +70,7 @@ else()
 	set(SRC_WIN32 "")
 endif()
 
-add_library( lxd SHARED
+add_library( lxd STATIC
 	defines.h
 	${SOURCE_STRINGS}
 	${SRC_COMMON}
@@ -82,7 +82,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE)
 	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
 endif()
-target_compile_definitions(lxd PRIVATE -DBUILDING_DLL)
 target_compile_features( lxd PRIVATE cxx_std_20)
 target_precompile_headers(lxd PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/defines.h>")
 target_link_libraries(lxd PUBLIC fmt::fmt-header-only)
