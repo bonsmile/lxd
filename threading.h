@@ -83,6 +83,11 @@ limitations under the License.
 	#include "qurt_atomic_ops.h"
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#endif
+
 #include <stdbool.h>
 #include "nanoseconds.h"
 
@@ -976,3 +981,7 @@ static void ksThreadPool_Join( ksThreadPool * pool )
 }
 
 #endif // !KSTHREADING_H
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
