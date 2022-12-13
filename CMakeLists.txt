@@ -34,18 +34,12 @@ set(SRC_COMMON
 	debug.cpp
 	encoding.h
 	encoding.cpp
-	fileio.h
-	fileio.cpp
 	timer.h
 	timer.cpp
 	base64.h
 	base64.cpp
-	crypt.h
-	crypt.cpp
 	str.h
 	str.cpp
-	utils.h
-	utils.cpp
 	json.h
 	threading.h
 	nanoseconds.h
@@ -58,6 +52,12 @@ set(SRC_COMMON
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(SRC_WIN32
+		fileio.h
+		fileio.cpp
+		crypt.h
+		crypt.cpp
+		utils.h
+		utils.cpp
 		http.h
 		http.cpp
 		AsyncFile.h
