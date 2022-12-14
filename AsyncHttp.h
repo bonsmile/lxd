@@ -110,7 +110,7 @@ private:
 
 class RequestTask {
 public:
-	virtual ~RequestTask() {};
+	//virtual ~RequestTask() {};
 
 	virtual void Wait() = 0;
 
@@ -142,7 +142,7 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
-	virtual ~GetRequestTask() {}
+	//virtual ~GetRequestTask() {}
 
 	void Wait() override;
 
@@ -251,7 +251,7 @@ public:
 		const std::pair<std::wstring_view, std::wstring_view>& cred = {}
 	);
 
-	~PostRequestTask() {}
+	//~PostRequestTask() {}
 
 	void Wait() override;
 

@@ -5,6 +5,11 @@
 #include <fmt/format.h>
 #include <fmt/xchar.h>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 5205)
+#endif // _MSC_VER
+
 namespace lxd {
 
 HRESULT MyRequest::Initialize(
@@ -232,7 +237,6 @@ void GetRequestTask::Wait() {
 	if (_getReq) {
 		_getReq->Wait();
 	}
-
 }
 
 void GetRequestTask::Cancel() {
@@ -716,3 +720,7 @@ bool HttpClient::IsRequesting(unsigned int requestId) {
 }
 
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
