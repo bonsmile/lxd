@@ -414,6 +414,10 @@ Traverse DOM    2.6 GHz        2.6 GHz        2.1 GHz        2.1 GHz        2.1 
 	#pragma warning( disable : 4201 4996 )	// nonstandard extension used: nameless struct/union
 #endif
 
+#ifdef __clang__
+	#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
