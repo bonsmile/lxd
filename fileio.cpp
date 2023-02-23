@@ -321,7 +321,7 @@ namespace lxd {
 #endif
 	}
 
-	 bool ListDir(StringView path, std::vector<String>& result, bool recursive, const Char* filter) {
+	 bool ListDir(StringView path, std::vector<String>& result, bool recursive, const Char* suffix) {
 #ifdef _WIN32
 		auto searchPath = fmt::format(L"{}\\*", path);
 		WIN32_FIND_DATAW FindFileData;
@@ -330,7 +330,7 @@ namespace lxd {
 			return false;
 		}
 
-		static std::wstring currentPath;
+		std::wstring currentPath;
 
 		do {
 			if(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -338,34 +338,24 @@ namespace lxd {
 					continue;
 				}
 				if(recursive) {
-					auto searchPath2 = fmt::format(L"{}\\{}", path, FindFileData.cFileName);
-					currentPath = FindFileData.cFileName;
-					ListDir(searchPath2.data(), result, recursive, filter);
+					currentPath = fmt::format(L"{}\\{}", path, FindFileData.cFileName);
+					ListDir(currentPath.data(), result, recursive, suffix);
 				}
 			} else {
-				if(nullptr == filter) {
-					if(currentPath.empty()) {
-						result.push_back(FindFileData.cFileName);
-					} else {
-						result.push_back(fmt::format(L"{}\\{}", currentPath, FindFileData.cFileName));
-					}
+				if(nullptr == suffix) {
+					result.push_back(fmt::format(L"{}\\{}", path, FindFileData.cFileName));
 				} else {
-					int lenFilter = lstrlenW(filter);
+					int lenFilter = lstrlenW(suffix);
 					int lenName = lstrlenW(FindFileData.cFileName);
 					if(lenFilter < lenName) {
-						if(lstrcmpiW(filter, FindFileData.cFileName + (lenName - lenFilter)) == 0) {
-							if(currentPath.empty()) {
-								result.push_back(FindFileData.cFileName);
-							} else {
-								result.push_back(fmt::format(L"{}\\{}", currentPath, FindFileData.cFileName));
-							}
+						if(lstrcmpiW(suffix, FindFileData.cFileName + (lenName - lenFilter)) == 0) {
+							result.push_back(fmt::format(L"{}\\{}", path, FindFileData.cFileName));
 						}
 					}
 				}
 			}
 		} while(FindNextFileW(hFind, &FindFileData) != 0);
 
-		currentPath.clear();
 		FindClose(hFind);
 
 		return true;

@@ -42,7 +42,7 @@ namespace lxd {
 	DLL_PUBLIC bool CreateDirRecursive(const String& path);
 	DLL_PUBLIC int DeleteDir(StringView path, bool bDeleteSubdirectories = true);
 	DLL_PUBLIC bool DirExists(StringView path);
-	DLL_PUBLIC bool ListDir(StringView path, std::vector<String>& result, bool recursive = false, const Char* filter = nullptr);
+	DLL_PUBLIC bool ListDir(StringView path, std::vector<String>& result, bool recursive = false, const Char* suffix = nullptr);
 
 	DLL_PUBLIC String GetExePath();
 
