@@ -60,8 +60,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		utils.cpp
 		http.h
 		http.cpp
-		AsyncFile.h
-		AsyncFile.cpp
 		AsyncHttp.h
 		AsyncHttp.cpp
 		WinHTTPWrappers.h
@@ -78,7 +76,7 @@ add_library( lxd STATIC
 	${VERSION_RC}
 )
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	target_compile_options(lxd PRIVATE "/utf-8" "/fp:fast" "/W4" "/wd4251")
+	target_compile_options(lxd PRIVATE "/utf-8" "/fp:fast" "/W4" "/wd4251" "-Wno-unused-function")
 	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE)
 	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
 endif()
