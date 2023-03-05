@@ -76,9 +76,12 @@ add_library( lxd STATIC
 	${VERSION_RC}
 )
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	target_compile_options(lxd PRIVATE "/utf-8" "/fp:fast" "/W4" "/wd4251" "-Wno-unused-function")
+	target_compile_options(lxd PRIVATE "/utf-8" "/fp:fast" "/W4" "/wd4251")
 	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE)
 	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(lxd PRIVATE "-Wno-unused-function")
 endif()
 target_compile_features( lxd PRIVATE cxx_std_20)
 target_precompile_headers(lxd PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/defines.h>")
