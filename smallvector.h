@@ -34,7 +34,7 @@
 #pragma warning(disable: 4324) // 由于对齐说明符，结构被填充
 
 #define LLVM_GSL_OWNER
-#define LLVM_ENABLE_EXCEPTIONS
+//#define LLVM_ENABLE_EXCEPTIONS
 #define LLVM_LIKELY(x) (x)
 #define LLVM_UNLIKELY(x) (x)
 
@@ -1402,7 +1402,8 @@ static void report_size_overflow(size_t MinSize, size_t MaxSize) {
 #ifdef LLVM_ENABLE_EXCEPTIONS
     throw std::length_error(Reason);
 #else
-    report_fatal_error(Twine(Reason));
+    //report_fatal_error(Twine(Reason));
+    abort();
 #endif
 }
 
@@ -1416,7 +1417,8 @@ static void report_at_maximum_capacity(size_t MaxSize) {
 #ifdef LLVM_ENABLE_EXCEPTIONS
     throw std::length_error(Reason);
 #else
-    report_fatal_error(Twine(Reason));
+    //report_fatal_error(Twine(Reason));
+    abort();
 #endif
 }
 
