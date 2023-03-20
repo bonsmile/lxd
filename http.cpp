@@ -631,8 +631,10 @@ error:
             headersContent.append(header.second);
             headersContent.append(L"\r\n");
         }
-        headersContent.pop_back();
-        headersContent.pop_back();
+        if (!headers.empty()) {
+            headersContent.pop_back();
+            headersContent.pop_back();
+        }
 
         if (!WinHttpSendRequest(
             hRequest.get(),
