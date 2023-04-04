@@ -18,7 +18,7 @@ namespace lxd {
 		std::string output = fmt::vformat(fmt, fmt::make_format_args(std::forward<Args>(args)...));
 		OutputDebugStringA(output.c_str());
 #else
-		fmt::print(fmt, std::forward<Args>(args)...);
+		fmt::print(fmt::runtime(fmt), std::forward<Args>(args)...);
 #endif
 	}
 #ifdef _WIN32
