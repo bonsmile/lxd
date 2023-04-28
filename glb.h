@@ -48,12 +48,13 @@ namespace lxd {
 		~Glb() {}
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
-		bool createFromPolygonSoup(const std::vector<MyVec3>& points);
+		bool createFromPolygonSoup(const std::vector<MyVec3>& points, std::vector<char>& extraAttribute);
 		bool save(const String& path);
 		std::vector<uint8_t> searialize();
 		//
 		std::span<MyVec3> getPositions();
 		std::variant<std::span<uint16_t>, std::span<uint32_t>> getIndices();
+	    std::span<char> getExtraAttribute();
 	private:
 		void clear();
 		void extractChunk(const char* data, size_t size);

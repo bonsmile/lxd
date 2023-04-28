@@ -205,7 +205,7 @@ namespace lxd {
 		return true;
 	}
 
-	bool Glb::createFromPolygonSoup(const std::vector<MyVec3>& triangles) {
+	bool Glb::createFromPolygonSoup(const std::vector<MyVec3>& triangles, std::vector<char>& extraAttribute) {
 		if(triangles.empty() || triangles.size() % 3 != 0)
 			return false;
 
@@ -245,7 +245,7 @@ namespace lxd {
 		// Binary Buffer
 		Chunk chunk;
 		chunk.type = 0x004E4942; // BIN
-		{
+		{// Index
 			std::visit([&](auto& indices) {
 				auto pIndices = reinterpret_cast<const char*>(indices.data());
 				chunk.data.assign(pIndices, pIndices + sizeof(indices[0]) * indices.size());
@@ -261,12 +261,26 @@ namespace lxd {
 				}
 			}
 		}
-		{
+		{ // Position
 			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
 			auto pPoints = reinterpret_cast<const char*>(points.data());
 			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3) * points.size());
 			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
 			m_bufferViews.push_back(bufferView);
+		}
+		{ // Extra
+		    BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
+		    chunk.data.insert(chunk.data.end(), extraAttribute.cbegin(), extraAttribute.cend());
+		    bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
+		    m_bufferViews.push_back(bufferView);
+		    // 每个 Chunk 长度需要是 4 的倍数, 此 chunk = indices + positions, postions 永远是 4 的倍数，因此只需要处理 char 这种情况
+		    auto curSize = chunk.data.size();
+		    if (curSize % 4 != 0) {
+			    size_t extra = 4 - curSize % 4;
+			    for (size_t i = 0; i < extra; i++) {
+				    chunk.data.push_back(0x00);
+			    }
+		    }
 		}
 		// JSON
 		char* json = NULL;
@@ -311,6 +325,12 @@ namespace lxd {
 				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "componentType"), 5126);// float
 				ksJson_SetUint64(ksJson_AddObjectMember(posAccessor, "count"), points.size());
 				ksJson_SetString(ksJson_AddObjectMember(posAccessor, "type"), "VEC3");
+			    ksJson* extraAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
+			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "bufferView"), 2);
+			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "byteOffset"), 0); // bufferView 内的偏移
+			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "componentType"), 5120); // char
+			    ksJson_SetUint64(ksJson_AddObjectMember(extraAccessor, "count"), extraAttribute.size());
+			    ksJson_SetString(ksJson_AddObjectMember(extraAccessor, "type"), "SCALAR");
 			}
 			// meshes
 			{
@@ -321,6 +341,7 @@ namespace lxd {
 				ksJson* attributes = ksJson_SetObject(ksJson_AddObjectMember(primitive0, "attributes"));
 				ksJson_SetUint32(ksJson_AddObjectMember(primitive0, "indices"), 0); // accessor 0
 				ksJson_SetUint32(ksJson_AddObjectMember(attributes, "POSITION"), 1); // accessor 1
+			    ksJson_SetUint32(ksJson_AddObjectMember(attributes, "_EXTRAATTR"), 2); // accessor 2, 自定义顶点属性
 			}
 			// nodes
 			{
@@ -419,6 +440,17 @@ namespace lxd {
 		}
 		return result;
 	}
+
+	std::span<char> Glb::getExtraAttribute() {
+		if (m_accessors.size() >= 3 && m_bufferViews.size() >= 3) {
+		    std::span<char> result;
+		    assert(std::strcmp(m_accessors[2].type, "SCALAR") == 0);
+		    result = std::span<char>{m_chunks[1].data.data() + m_accessors[2].byteOffset + m_bufferViews[m_accessors[2].bufferView].byteOffset, static_cast<size_t>(m_accessors[2].count)};
+		    return result;
+	    } else {
+		    return {};
+		}
+    }
 
 	void Glb::clear() {
 		m_accessors.clear();
