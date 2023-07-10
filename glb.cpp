@@ -216,51 +216,29 @@ namespace lxd {
 		return true;
 	}
 
-	bool Glb::createFromPolygonSoup(const std::vector<MyVec3d>& triangles, std::vector<char>& extraAttribute, int fdi, std::vector<int> ids) {
-		if(triangles.empty() || triangles.size() % 3 != 0)
+	bool Glb::create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, std::vector<char>& extraAttribute, int fdi, std::vector<int> ids) {
+	    if (points.empty())
 			return false;
 
-		size_t nFacet = triangles.size() / 3;
-		std::unordered_map<lxd::MyVec3d, int> mapVtxId;
-		std::unordered_map<lxd::MyVec3d, int>::iterator iter;
-		mapVtxId.reserve(nFacet);
-		std::vector<lxd::MyVec3f> points; // 顶点
 		std::variant<std::vector<uint16_t>, std::vector<uint32_t>> indicesVar;// 索引
+	    size_t nFacet = faces.size();
 		if(3 * nFacet < USHRT_MAX) {
-			indicesVar = std::vector<uint16_t>();
-		} else {
-			indicesVar = std::vector<uint32_t>();
-		}
-	    lxd::File* pFile{};
-	    if (fdi == 31)
-		    pFile = new lxd::File(L"C:\\31tooth_glb.txt", lxd::WriteOnly);
-		uint32_t vId = 0;
-		for(size_t i = 0; i < nFacet; i++) {
-			for(int j = 0; j < 3; j++) {
-				const MyVec3d& v = triangles[i * 3 + j];
-				iter = mapVtxId.find(v);
-				if(iter == mapVtxId.end()) {
-				    points.push_back(MyVec3f{static_cast<float>(v.v[0]), static_cast<float>(v.v[1]), static_cast<float>(v.v[2])});
-					if (pFile && ids.size() == triangles.size()) {
-					    std::string line = fmt::format("{}, {}, {}\t{}\t{}\n", v.v[0], v.v[1], v.v[2], vId, ids[i * 3 + j]);
-					    pFile->write(line.c_str(), line.size());
-					}
-					mapVtxId.insert(std::make_pair(v, vId));
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
-						p->push_back((uint16_t)vId);
-					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
-						p1->push_back(vId);
-					vId++;
-				} else {
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
-						p->push_back((uint16_t)iter->second);
-					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
-						p1->push_back(iter->second);
+		    std::vector<uint16_t> indices;
+			for (const Face& face : faces) {
+				for (int i = 0; i < 3; i++) {
+				    indices.push_back(face.vid[i]);
 				}
 			}
+		    indicesVar = indices;
+		} else {
+		    std::vector<uint32_t> indices;
+		    for (const Face& face: faces) {
+			    for (int i = 0; i < 3; i++) {
+				    indices.push_back(face.vid[i]);
+			    }
+		    }
+		    indicesVar = indices;
 		}
-	    if (pFile)
-		    delete pFile;
 		// Binary Buffer
 		Chunk chunk;
 		chunk.type = 0x004E4942; // BIN

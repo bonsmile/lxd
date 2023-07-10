@@ -28,7 +28,9 @@ namespace lxd {
 		    return cwiseAbsSum < 1.0e-7;
 	    }
     };
-
+	struct Face {
+	    int vid[3];
+	};
 	class DLL_PUBLIC Glb {
 	public:
 		struct Header {
@@ -62,7 +64,7 @@ namespace lxd {
 		~Glb() {}
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
-		bool createFromPolygonSoup(const std::vector<MyVec3d>& points, std::vector<char>& extraAttribute, int fdi = -1, std::vector<int> ids = {});
+	    bool create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, std::vector<char>& extraAttribute, int fdi = -1, std::vector<int> ids = {});
 		bool save(const String& path);
 		std::vector<uint8_t> searialize();
 		//
