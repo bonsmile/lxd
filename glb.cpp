@@ -6,13 +6,24 @@
 #include "fileio.h"
 
 namespace std {
+	template<>
+	struct hash<lxd::MyVec3f> {
+		size_t operator()(const lxd::MyVec3f& vec) const {
+			size_t seed = 0;
+			for (int i = 0; i < 3; ++i) {
+				seed ^=
+			        std::hash<float>()(vec.v[i]) + 0x9e3779b9U + (seed << 6) + (seed >> 2);
+			}
+			return seed;
+		}
+	};
 	template <>
-	struct hash<lxd::MyVec3> {
-		size_t operator()(const lxd::MyVec3& vec) const {
+	struct hash<lxd::MyVec3d> {
+		size_t operator()(const lxd::MyVec3d& vec) const {
 			size_t seed = 0;
 			for(int i = 0; i < 3; ++i) {
 				seed ^=
-					std::hash<float>()(vec.v[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			        std::hash<double>()(vec.v[i]) + 0x9e3779b97f4a7c15LLU + (seed << 12) + (seed >> 4);
 			}
 			return seed;
 		}
@@ -54,10 +65,10 @@ namespace lxd {
 		//UINT8[80]    – Header - 80 bytes
 		//UINT32       – Number of triangles - 4 bytes
 		auto nFacet = *reinterpret_cast<const uint32_t*>(buffer.data() + 80);
-		std::unordered_map<lxd::MyVec3, int> mapVtxId;
-		std::unordered_map<lxd::MyVec3, int>::iterator iter;
+		std::unordered_map<lxd::MyVec3f, int> mapVtxId;
+		std::unordered_map<lxd::MyVec3f, int>::iterator iter;
 		mapVtxId.reserve(nFacet);
-		std::vector<lxd::MyVec3> points; // 顶点
+		std::vector<lxd::MyVec3f> points; // 顶点
 		std::variant<std::vector<uint16_t>, std::vector<uint32_t>> indicesVar;// 索引
 		if(3 * nFacet < USHRT_MAX) {
 			indicesVar = std::vector<uint16_t>();
@@ -70,7 +81,7 @@ namespace lxd {
 			auto pFacet = reinterpret_cast<const StlFacet*>(buffer.data() + 84 + i * sizeof(StlFacet));
 			auto pV1 = pFacet->v1;
 			for(int j = 0; j < 3; j++) {
-				const lxd::MyVec3* pVec3 = reinterpret_cast<const lxd::MyVec3*>(pV1 + j * 3);
+				const lxd::MyVec3f* pVec3 = reinterpret_cast<const lxd::MyVec3f*>(pV1 + j * 3);
 				iter = mapVtxId.find(*pVec3);
 				if(iter == mapVtxId.end()) {
 					points.push_back(*pVec3);
@@ -110,7 +121,7 @@ namespace lxd {
 		{
 			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
 			auto pPoints = reinterpret_cast<const char*>(points.data());
-			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3) * points.size());
+			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3f) * points.size());
 			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
 			m_bufferViews.push_back(bufferView);
 		}
@@ -205,42 +216,28 @@ namespace lxd {
 		return true;
 	}
 
-	bool Glb::createFromPolygonSoup(const std::vector<MyVec3>& triangles, std::vector<char>& extraAttribute) {
-		if(triangles.empty() || triangles.size() % 3 != 0)
+	bool Glb::create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, std::vector<char>& extraAttribute, int fdi, std::vector<int> ids) {
+	    if (points.empty())
 			return false;
 
-		size_t nFacet = triangles.size() / 3;
-		std::unordered_map<lxd::MyVec3, int> mapVtxId;
-		std::unordered_map<lxd::MyVec3, int>::iterator iter;
-		mapVtxId.reserve(nFacet);
-		std::vector<lxd::MyVec3> points; // 顶点
 		std::variant<std::vector<uint16_t>, std::vector<uint32_t>> indicesVar;// 索引
+	    size_t nFacet = faces.size();
 		if(3 * nFacet < USHRT_MAX) {
-			indicesVar = std::vector<uint16_t>();
-		} else {
-			indicesVar = std::vector<uint32_t>();
-		}
-
-		uint32_t vId = 0;
-		for(size_t i = 0; i < nFacet; i++) {
-			for(int j = 0; j < 3; j++) {
-				const lxd::MyVec3& v = triangles[i * 3 + j];
-				iter = mapVtxId.find(v);
-				if(iter == mapVtxId.end()) {
-					points.push_back(v);
-					mapVtxId.insert(std::make_pair(v, vId));
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
-						p->push_back((uint16_t)vId);
-					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
-						p1->push_back(vId);
-					vId++;
-				} else {
-					if(auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
-						p->push_back((uint16_t)iter->second);
-					else if(auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
-						p1->push_back(iter->second);
+		    std::vector<uint16_t> indices;
+			for (const Face& face : faces) {
+				for (int i = 0; i < 3; i++) {
+				    indices.push_back(face.vid[i]);
 				}
 			}
+		    indicesVar = indices;
+		} else {
+		    std::vector<uint32_t> indices;
+		    for (const Face& face: faces) {
+			    for (int i = 0; i < 3; i++) {
+				    indices.push_back(face.vid[i]);
+			    }
+		    }
+		    indicesVar = indices;
 		}
 		// Binary Buffer
 		Chunk chunk;
@@ -264,7 +261,7 @@ namespace lxd {
 		{ // Position
 			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
 			auto pPoints = reinterpret_cast<const char*>(points.data());
-			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3) * points.size());
+			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3f) * points.size());
 			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
 			m_bufferViews.push_back(bufferView);
 		}
@@ -422,10 +419,10 @@ namespace lxd {
 		return result;
 	}
 
-	std::span<MyVec3> Glb::getPositions() {
+	std::span<MyVec3f> Glb::getPositions() {
 		assert(m_accessors.size() >= 2 && m_bufferViews.size() >= 2);
 		assert(m_accessors[1].componentType == 5126 && std::strcmp(m_accessors[1].type, "VEC3") == 0);
-		std::span<MyVec3> result{reinterpret_cast<MyVec3*>(m_chunks[1].data.data() + m_accessors[1].byteOffset + m_bufferViews[m_accessors[1].bufferView].byteOffset), static_cast<size_t>(m_accessors[1].count)};
+		std::span<MyVec3f> result{reinterpret_cast<MyVec3f*>(m_chunks[1].data.data() + m_accessors[1].byteOffset + m_bufferViews[m_accessors[1].bufferView].byteOffset), static_cast<size_t>(m_accessors[1].count)};
 		return result;
 	}
 

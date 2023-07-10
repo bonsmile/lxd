@@ -8,13 +8,29 @@
 #include <variant>
 
 namespace lxd {
-	struct MyVec3 {
+	struct MyVec3f {
 		float v[3];
-		friend bool operator==(const MyVec3& a, const MyVec3& b) {
-			return a.v[0] == b.v[0] && a.v[1] == b.v[1] && a.v[2] == b.v[2];
+		friend bool operator==(const MyVec3f& a, const MyVec3f& b) {
+		    float cwiseAbsSum = 0;
+			for (int i = 0; i < 3; i++) {
+			    cwiseAbsSum += abs(a.v[i] - b.v[i]);
+			}
+		    return cwiseAbsSum < 1.0e-7;
 		}
 	};
-
+    struct MyVec3d {
+	    double v[3];
+	    friend bool operator==(const MyVec3d& a, const MyVec3d& b) {
+		    double cwiseAbsSum = 0;
+		    for (int i = 0; i < 3; i++) {
+			    cwiseAbsSum += abs(a.v[i] - b.v[i]);
+		    }
+		    return cwiseAbsSum < 1.0e-7;
+	    }
+    };
+	struct Face {
+	    int vid[3];
+	};
 	class DLL_PUBLIC Glb {
 	public:
 		struct Header {
@@ -48,11 +64,11 @@ namespace lxd {
 		~Glb() {}
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
-		bool createFromPolygonSoup(const std::vector<MyVec3>& points, std::vector<char>& extraAttribute);
+	    bool create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, std::vector<char>& extraAttribute, int fdi = -1, std::vector<int> ids = {});
 		bool save(const String& path);
 		std::vector<uint8_t> searialize();
 		//
-		std::span<MyVec3> getPositions();
+		std::span<MyVec3f> getPositions();
 		std::variant<std::span<uint16_t>, std::span<uint32_t>> getIndices();
 	    std::span<char> getExtraAttribute();
 	private:
