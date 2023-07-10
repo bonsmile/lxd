@@ -216,7 +216,7 @@ namespace lxd {
 		return true;
 	}
 
-	bool Glb::create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, std::vector<char>& extraAttribute, int fdi, std::vector<int> ids) {
+	bool Glb::create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, const std::vector<char>& extraAttribute) {
 	    if (points.empty())
 			return false;
 
