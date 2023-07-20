@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.16.0 )
+cmake_minimum_required( VERSION 3.25.0 )
 
 project(lxd VERSION 2.0.0.0)
 
