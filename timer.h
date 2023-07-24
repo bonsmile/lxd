@@ -12,4 +12,7 @@ namespace lxd {
 		Human
 	};
 	DLL_PUBLIC const std::string date(const DateFormat fmt = Default);
+#ifdef _WIN32
+	DLL_PUBLIC char* strptime(const char* s, const char* f, struct tm* tm);
+#endif
 }
