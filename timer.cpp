@@ -1,4 +1,4 @@
-#include "timer.h"
+﻿#include "timer.h"
 #include <fmt/chrono.h>
 #ifdef _WIN32
 #include <Windows.h>
