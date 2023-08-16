@@ -143,7 +143,6 @@ namespace lxd {
         // optional key/values
         for(auto const& pair : pairs) {
             auto str = fmt::format("{}{}name=\"{}\"\r\n\r\n{}", boundary, disposition, pair.first, pair.second);
-            lxd::print("{}", str);
             totalSize += str.size();
             optionals.emplace_back(std::move(str));
         }
@@ -151,7 +150,6 @@ namespace lxd {
         // additional
         for(auto const& file : files) {
             auto str = fmt::format("{}{}name=\"StlBinary\"; filename=\"{}\"\r\nContent-Type: application/zip\r\n\r\n", boundary, disposition, file.first);
-            lxd::print("{}", str);
             totalSize += str.size();
             totalSize += file.second.size();
             additionals.emplace_back(std::make_pair(std::move(str), file.second));
