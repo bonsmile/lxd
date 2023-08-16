@@ -235,8 +235,9 @@ namespace lxd {
             }
         } while(dwSize > 0);
 
-error:
-        lxd::print("Error {} has occurred.\n", GetLastError());
+    error:
+	    if (GetLastError() != 0)
+            lxd::print("Error {} has occurred.\n", GetLastError());
     }
 
     PostFormdata::~PostFormdata() {
@@ -329,8 +330,9 @@ error:
             }
         } while(dwSize > 0);
 
-error:
-        lxd::print("Error {} has occurred.\n", GetLastError());
+    error:
+	    if (GetLastError() != 0)
+            lxd::print("Error {} has occurred.\n", GetLastError());
     }
 
     PostFormUrlencoded::~PostFormUrlencoded() {
@@ -411,8 +413,9 @@ error:
             }
         } while(dwSize > 0);
 
-error:
-        lxd::print("Error {} has occurred.\n", GetLastError());
+    error:
+	    if (GetLastError() != 0)
+            lxd::print("Error {} has occurred.\n", GetLastError());
     }
 
     PostJson::~PostJson() {
@@ -502,8 +505,9 @@ error:
             }
         } while(dwSize > 0);
 
-error:
-        lxd::print("Error {} has occurred.\n", GetLastError());
+    error:
+	    if (GetLastError() != 0)
+            lxd::print("Error {} has occurred.\n", GetLastError());
     }
 
     GetJson::~GetJson() {
@@ -571,8 +575,9 @@ error:
         } while(dwSize > 0);
 
         // Report any errors.
-error:
-        lxd::print("Error {} has occurred.\n", GetLastError());
+    error:
+	    if (GetLastError() != 0)
+            lxd::print("Error {} has occurred.\n", GetLastError());
     }
     PutFile::~PutFile() {
         // Close any open handles.
