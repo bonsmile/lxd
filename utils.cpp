@@ -1,6 +1,7 @@
 ﻿#include "utils.h"
 #include <cassert>
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h> // For Win32 API
 #include <Psapi.h>
 #include <shlobj_core.h>
