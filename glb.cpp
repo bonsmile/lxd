@@ -226,7 +226,7 @@ namespace lxd {
 		    std::vector<uint16_t> indices;
 			for (const Face& face : faces) {
 				for (int i = 0; i < 3; i++) {
-				    indices.push_back(face.vid[i]);
+				    indices.push_back((uint16_t)face.vid[i]);
 				}
 			}
 		    indicesVar = indices;
