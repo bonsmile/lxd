@@ -99,121 +99,7 @@ namespace lxd {
 				}
 			}
 		}
-		// Binary Buffer
-		Chunk chunk;
-		chunk.type = 0x004E4942; // BIN
-		{
-			std::visit([&](auto& indices) {
-				auto pIndices = reinterpret_cast<const char*>(indices.data());
-				chunk.data.assign(pIndices, pIndices + sizeof(indices[0]) * indices.size());
-			}, indicesVar);
-			BufferView bufferView{.buffer = 0, .byteOffset = 0, .byteLength = static_cast<int>(chunk.data.size()), .target = 34963};
-			m_bufferViews.push_back(bufferView);
-			// 每个 Chunk 长度需要是 4 的倍数, 此 chunk = indices + positions, postions 永远是 4 的倍数，因此只需要处理 ushort index 这种情况
-			auto curSize = chunk.data.size();
-			if(curSize % 4 != 0) {
-				size_t extra = 4 - curSize % 4;
-				for(size_t i = 0; i < extra; i++) {
-					chunk.data.push_back(0x00);
-				}
-			}
-		}
-		{
-			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
-			auto pPoints = reinterpret_cast<const char*>(points.data());
-			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3f) * points.size());
-			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
-			m_bufferViews.push_back(bufferView);
-		}
-		// JSON
-		char* json = NULL;
-		int length = 0;
-		{
-			// asset
-			ksJson* rootNode = ksJson_SetObject(ksJson_Create());
-			ksJson* asset = ksJson_SetObject(ksJson_AddObjectMember(rootNode, "asset"));
-			ksJson_SetString(ksJson_AddObjectMember(asset, "version"), "2.0");
-			// buffers
-			{
-				ksJson* buffers = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "buffers"));
-				ksJson* idxBuffer = ksJson_SetObject(ksJson_AddArrayElement(buffers));
-				ksJson_SetUint64(ksJson_AddObjectMember(idxBuffer, "byteLength"), chunk.data.size());
-			}
-			// buffer views
-			ksJson* bufferViews = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "bufferViews"));
-			for(auto& bufferView : m_bufferViews) {
-				ksJson* pBufferView = ksJson_SetObject(ksJson_AddArrayElement(bufferViews));
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "buffer"), bufferView.buffer);
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "byteOffset"), bufferView.byteOffset); // buffer 内的偏移
-				ksJson_SetUint64(ksJson_AddObjectMember(pBufferView, "byteLength"), bufferView.byteLength);
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "target"), bufferView.target);
-			}
-			// accessors
-			{
-				size_t idxSize, idxCnt;
-				std::visit([&](auto& indices) {
-					idxSize = sizeof(indices[0]);
-					idxCnt = indices.size();
-				}, indicesVar);
-				ksJson* accessors = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "accessors"));
-				ksJson* idxAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "bufferView"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0); // bufferView 内的偏移
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), idxSize == 2 ? 5123 : 5125); // unsigned short
-				ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), idxCnt);
-				ksJson_SetString(ksJson_AddObjectMember(idxAccessor, "type"), "SCALAR");
-				ksJson* posAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "bufferView"), 1);
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "byteOffset"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "componentType"), 5126);// float
-				ksJson_SetUint64(ksJson_AddObjectMember(posAccessor, "count"), points.size());
-				ksJson_SetString(ksJson_AddObjectMember(posAccessor, "type"), "VEC3");
-			}
-			// meshes
-			{
-				ksJson* meshes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "meshes"));
-				ksJson* mesh0 = ksJson_SetObject(ksJson_AddArrayElement(meshes));
-				ksJson* primitives = ksJson_SetArray(ksJson_AddObjectMember(mesh0, "primitives"));
-				ksJson* primitive0 = ksJson_SetObject(ksJson_AddArrayElement(primitives));
-				ksJson* attributes = ksJson_SetObject(ksJson_AddObjectMember(primitive0, "attributes"));
-				ksJson_SetUint32(ksJson_AddObjectMember(primitive0, "indices"), 0); // accessor 0
-				ksJson_SetUint32(ksJson_AddObjectMember(attributes, "POSITION"), 1); // accessor 1
-			}
-			// nodes
-			{
-				ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "nodes"));
-				ksJson* node0 = ksJson_SetObject(ksJson_AddArrayElement(nodes));
-				ksJson_SetUint32(ksJson_AddObjectMember(node0, "mesh"), 0);
-			}
-			// scene
-			{
-				ksJson_SetUint32(ksJson_AddObjectMember(rootNode, "scene"), 0);
-				ksJson* scenes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "scenes"));
-				ksJson* scene0 = ksJson_SetObject(ksJson_AddArrayElement(scenes));
-				ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(scene0, "nodes"));
-				ksJson_SetUint32(ksJson_AddArrayElement(nodes), 0);
-			}
-			ksJson_WriteToBuffer(rootNode, &json, &length);
-			ksJson_Destroy(rootNode);
-		}
-		// JSON
-		Chunk jsonChunk;
-		jsonChunk.type = 0x4E4F534A; // JSON
-		{
-			jsonChunk.data.assign(json, json + length);
-			// 每个 Chunk 末尾需要 4 字节对齐
-			auto curSize = jsonChunk.data.size();
-			if(curSize % 4 != 0) {
-				auto extra = 4 - curSize % 4;
-				for(size_t n = 0; n < extra; n++) {
-					jsonChunk.data.push_back(' '); // JSON 利用空格字符对齐
-				}
-			}
-		}
-		free(json);
-		m_chunks.emplace_back(std::move(jsonChunk));
-		m_chunks.emplace_back(std::move(chunk));
-		return true;
+		return create(points, indicesVar, {});
 	}
 
 	bool Glb::create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, const std::vector<char>& extraAttribute) {
@@ -239,33 +125,76 @@ namespace lxd {
 		    }
 		    indicesVar = indices;
 		}
-		// Binary Buffer
-		Chunk chunk;
-		chunk.type = 0x004E4942; // BIN
-		{// Index
-			std::visit([&](auto& indices) {
-				auto pIndices = reinterpret_cast<const char*>(indices.data());
-				chunk.data.assign(pIndices, pIndices + sizeof(indices[0]) * indices.size());
-				}, indicesVar);
-			BufferView bufferView{.buffer = 0, .byteOffset = 0, .byteLength = static_cast<int>(chunk.data.size()), .target = 34963};
-			m_bufferViews.push_back(bufferView);
-			// 每个 Chunk 长度需要是 4 的倍数, 此 chunk = indices + positions, postions 永远是 4 的倍数，因此只需要处理 ushort index 这种情况
-			auto curSize = chunk.data.size();
-			if(curSize % 4 != 0) {
-				size_t extra = 4 - curSize % 4;
-				for(size_t i = 0; i < extra; i++) {
-					chunk.data.push_back(0x00);
-				}
-			}
+		
+		return create(points, indicesVar, extraAttribute);
+	}
+
+	bool Glb::create(const std::vector<MyVec3f>& points) {
+	    if (points.empty() || points.size() % 3 != 0)
+		    return false;
+	    size_t nFacet = points.size() / 3;
+	    std::unordered_map<lxd::MyVec3f, int> mapVtxId;
+	    std::unordered_map<lxd::MyVec3f, int>::iterator iter;
+	    mapVtxId.reserve(nFacet);
+	    std::variant<std::vector<uint16_t>, std::vector<uint32_t>> indicesVar; // 索引
+	    if (3 * nFacet < USHRT_MAX) {
+		    indicesVar = std::vector<uint16_t>();
+	    } else {
+		    indicesVar = std::vector<uint32_t>();
+	    }
+
+	    std::vector<lxd::MyVec3f> newPoints;
+	    uint32_t vId = 0;
+		for (const lxd::MyVec3f& v3 : points) {
+		    iter = mapVtxId.find(v3);
+		    if (iter == mapVtxId.end()) {
+			    newPoints.push_back(v3);
+			    mapVtxId.insert(std::make_pair(v3, vId));
+			    if (auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+				    p->push_back((uint16_t)vId);
+			    else if (auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+				    p1->push_back(vId);
+			    vId++;
+		    } else {
+			    if (auto p = std::get_if<std::vector<uint16_t>>(&indicesVar))
+				    p->push_back((uint16_t)iter->second);
+			    else if (auto p1 = std::get_if<std::vector<uint32_t>>(&indicesVar))
+				    p1->push_back(iter->second);
+		    }
 		}
-		{ // Position
-			BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
-			auto pPoints = reinterpret_cast<const char*>(points.data());
-			chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3f) * points.size());
-			bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
-			m_bufferViews.push_back(bufferView);
-		}
-		{ // Extra
+
+	    return create(newPoints, indicesVar, {});
+	}
+
+	bool Glb::create(const std::vector<MyVec3f>& points, const std::variant<std::vector<uint16_t>, std::vector<uint32_t>>& indicesVar, const std::vector<char>& extraAttribute) {
+	    // Binary Buffer
+	    Chunk chunk;
+	    chunk.type = 0x004E4942; // BIN
+	    {                        // Index
+		    std::visit([&](auto& indices) {
+			    auto pIndices = reinterpret_cast<const char*>(indices.data());
+			    chunk.data.assign(pIndices, pIndices + sizeof(indices[0]) * indices.size());
+		    },
+		               indicesVar);
+		    BufferView bufferView{.buffer = 0, .byteOffset = 0, .byteLength = static_cast<int>(chunk.data.size()), .target = 34963};
+		    m_bufferViews.push_back(bufferView);
+		    // 每个 Chunk 长度需要是 4 的倍数, 此 chunk = indices + positions, postions 永远是 4 的倍数，因此只需要处理 ushort index 这种情况
+		    auto curSize = chunk.data.size();
+		    if (curSize % 4 != 0) {
+			    size_t extra = 4 - curSize % 4;
+			    for (size_t i = 0; i < extra; i++) {
+				    chunk.data.push_back(0x00);
+			    }
+		    }
+	    }
+	    { // Position
+		    BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
+		    auto pPoints = reinterpret_cast<const char*>(points.data());
+		    chunk.data.insert(chunk.data.end(), pPoints, pPoints + sizeof(MyVec3f) * points.size());
+		    bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
+		    m_bufferViews.push_back(bufferView);
+	    }
+	    { // Extra
 		    BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
 		    chunk.data.insert(chunk.data.end(), extraAttribute.cbegin(), extraAttribute.cend());
 		    bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
@@ -278,103 +207,105 @@ namespace lxd {
 				    chunk.data.push_back(0x00);
 			    }
 		    }
-		}
-		// JSON
-		char* json = NULL;
-		int length = 0;
-		{
-			// asset
-			ksJson* rootNode = ksJson_SetObject(ksJson_Create());
-			ksJson* asset = ksJson_SetObject(ksJson_AddObjectMember(rootNode, "asset"));
-			ksJson_SetString(ksJson_AddObjectMember(asset, "version"), "2.0");
-			// buffers
-			{
-				ksJson* buffers = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "buffers"));
-				ksJson* idxBuffer = ksJson_SetObject(ksJson_AddArrayElement(buffers));
-				ksJson_SetUint64(ksJson_AddObjectMember(idxBuffer, "byteLength"), chunk.data.size());
-			}
-			// buffer views
-			ksJson* bufferViews = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "bufferViews"));
-			for(auto& bufferView : m_bufferViews) {
-				ksJson* pBufferView = ksJson_SetObject(ksJson_AddArrayElement(bufferViews));
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "buffer"), bufferView.buffer);
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "byteOffset"), bufferView.byteOffset); // buffer 内的偏移
-				ksJson_SetUint64(ksJson_AddObjectMember(pBufferView, "byteLength"), bufferView.byteLength);
-				ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "target"), bufferView.target);
-			}
-			// accessors
-			{
-				size_t idxSize, idxCnt;
-				std::visit([&](auto& indices) {
-					idxSize = sizeof(indices[0]);
-					idxCnt = indices.size();
-					}, indicesVar);
-				ksJson* accessors = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "accessors"));
-				ksJson* idxAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "bufferView"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0); // bufferView 内的偏移
-				ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), idxSize == 2 ? 5123 : 5125); // unsigned short
-				ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), idxCnt);
-				ksJson_SetString(ksJson_AddObjectMember(idxAccessor, "type"), "SCALAR");
-				ksJson* posAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "bufferView"), 1);
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "byteOffset"), 0);
-				ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "componentType"), 5126);// float
-				ksJson_SetUint64(ksJson_AddObjectMember(posAccessor, "count"), points.size());
-				ksJson_SetString(ksJson_AddObjectMember(posAccessor, "type"), "VEC3");
+	    }
+	    // JSON
+	    char* json = NULL;
+	    int length = 0;
+	    {
+		    // asset
+		    ksJson* rootNode = ksJson_SetObject(ksJson_Create());
+		    ksJson* asset = ksJson_SetObject(ksJson_AddObjectMember(rootNode, "asset"));
+		    ksJson_SetString(ksJson_AddObjectMember(asset, "version"), "2.0");
+		    // buffers
+		    {
+			    ksJson* buffers = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "buffers"));
+			    ksJson* idxBuffer = ksJson_SetObject(ksJson_AddArrayElement(buffers));
+			    ksJson_SetUint64(ksJson_AddObjectMember(idxBuffer, "byteLength"), chunk.data.size());
+		    }
+		    // buffer views
+		    ksJson* bufferViews = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "bufferViews"));
+		    for (auto& bufferView: m_bufferViews) {
+			    ksJson* pBufferView = ksJson_SetObject(ksJson_AddArrayElement(bufferViews));
+			    ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "buffer"), bufferView.buffer);
+			    ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "byteOffset"), bufferView.byteOffset); // buffer 内的偏移
+			    ksJson_SetUint64(ksJson_AddObjectMember(pBufferView, "byteLength"), bufferView.byteLength);
+			    ksJson_SetUint32(ksJson_AddObjectMember(pBufferView, "target"), bufferView.target);
+		    }
+		    // accessors
+		    {
+			    size_t idxSize, idxCnt;
+			    std::visit([&](auto& indices) {
+				    idxSize = sizeof(indices[0]);
+				    idxCnt = indices.size();
+			    },
+			               indicesVar);
+			    ksJson* accessors = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "accessors"));
+			    ksJson* idxAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
+			    ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "bufferView"), 0);
+			    ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "byteOffset"), 0);                             // bufferView 内的偏移
+			    ksJson_SetUint32(ksJson_AddObjectMember(idxAccessor, "componentType"), idxSize == 2 ? 5123 : 5125); // unsigned short
+			    ksJson_SetUint64(ksJson_AddObjectMember(idxAccessor, "count"), idxCnt);
+			    ksJson_SetString(ksJson_AddObjectMember(idxAccessor, "type"), "SCALAR");
+			    ksJson* posAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
+			    ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "bufferView"), 1);
+			    ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "byteOffset"), 0);
+			    ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "componentType"), 5126); // float
+			    ksJson_SetUint64(ksJson_AddObjectMember(posAccessor, "count"), points.size());
+			    ksJson_SetString(ksJson_AddObjectMember(posAccessor, "type"), "VEC3");
 			    ksJson* extraAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
 			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "bufferView"), 2);
-			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "byteOffset"), 0); // bufferView 内的偏移
+			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "byteOffset"), 0);       // bufferView 内的偏移
 			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "componentType"), 5120); // char
 			    ksJson_SetUint64(ksJson_AddObjectMember(extraAccessor, "count"), extraAttribute.size());
 			    ksJson_SetString(ksJson_AddObjectMember(extraAccessor, "type"), "SCALAR");
-			}
-			// meshes
-			{
-				ksJson* meshes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "meshes"));
-				ksJson* mesh0 = ksJson_SetObject(ksJson_AddArrayElement(meshes));
-				ksJson* primitives = ksJson_SetArray(ksJson_AddObjectMember(mesh0, "primitives"));
-				ksJson* primitive0 = ksJson_SetObject(ksJson_AddArrayElement(primitives));
-				ksJson* attributes = ksJson_SetObject(ksJson_AddObjectMember(primitive0, "attributes"));
-				ksJson_SetUint32(ksJson_AddObjectMember(primitive0, "indices"), 0); // accessor 0
-				ksJson_SetUint32(ksJson_AddObjectMember(attributes, "POSITION"), 1); // accessor 1
+		    }
+		    // meshes
+		    {
+			    ksJson* meshes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "meshes"));
+			    ksJson* mesh0 = ksJson_SetObject(ksJson_AddArrayElement(meshes));
+			    ksJson* primitives = ksJson_SetArray(ksJson_AddObjectMember(mesh0, "primitives"));
+			    ksJson* primitive0 = ksJson_SetObject(ksJson_AddArrayElement(primitives));
+			    ksJson* attributes = ksJson_SetObject(ksJson_AddObjectMember(primitive0, "attributes"));
+			    ksJson_SetUint32(ksJson_AddObjectMember(primitive0, "indices"), 0);    // accessor 0
+			    ksJson_SetUint32(ksJson_AddObjectMember(attributes, "POSITION"), 1);   // accessor 1
 			    ksJson_SetUint32(ksJson_AddObjectMember(attributes, "_EXTRAATTR"), 2); // accessor 2, 自定义顶点属性
-			}
-			// nodes
-			{
-				ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "nodes"));
-				ksJson* node0 = ksJson_SetObject(ksJson_AddArrayElement(nodes));
-				ksJson_SetUint32(ksJson_AddObjectMember(node0, "mesh"), 0);
-			}
-			// scene
-			{
-				ksJson_SetUint32(ksJson_AddObjectMember(rootNode, "scene"), 0);
-				ksJson* scenes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "scenes"));
-				ksJson* scene0 = ksJson_SetObject(ksJson_AddArrayElement(scenes));
-				ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(scene0, "nodes"));
-				ksJson_SetUint32(ksJson_AddArrayElement(nodes), 0);
-			}
-			ksJson_WriteToBuffer(rootNode, &json, &length);
-			ksJson_Destroy(rootNode);
-		}
-		// JSON
-		Chunk jsonChunk;
-		jsonChunk.type = 0x4E4F534A; // JSON
-		{
-			jsonChunk.data.assign(json, json + length);
-			// 每个 Chunk 末尾需要 4 字节对齐
-			auto curSize = jsonChunk.data.size();
-			if(curSize % 4 != 0) {
-				auto extra = 4 - curSize % 4;
-				for(size_t n = 0; n < extra; n++) {
-					jsonChunk.data.push_back(' '); // JSON 利用空格字符对齐
-				}
-			}
-		}
-		free(json);
-		m_chunks.emplace_back(std::move(jsonChunk));
-		m_chunks.emplace_back(std::move(chunk));
-		return true;
+		    }
+		    // nodes
+		    {
+			    ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "nodes"));
+			    ksJson* node0 = ksJson_SetObject(ksJson_AddArrayElement(nodes));
+			    ksJson_SetUint32(ksJson_AddObjectMember(node0, "mesh"), 0);
+		    }
+		    // scene
+		    {
+			    ksJson_SetUint32(ksJson_AddObjectMember(rootNode, "scene"), 0);
+			    ksJson* scenes = ksJson_SetArray(ksJson_AddObjectMember(rootNode, "scenes"));
+			    ksJson* scene0 = ksJson_SetObject(ksJson_AddArrayElement(scenes));
+			    ksJson* nodes = ksJson_SetArray(ksJson_AddObjectMember(scene0, "nodes"));
+			    ksJson_SetUint32(ksJson_AddArrayElement(nodes), 0);
+		    }
+		    ksJson_WriteToBuffer(rootNode, &json, &length);
+		    ksJson_Destroy(rootNode);
+	    }
+	    // JSON
+	    Chunk jsonChunk;
+	    jsonChunk.type = 0x4E4F534A; // JSON
+	    {
+		    jsonChunk.data.assign(json, json + length);
+		    // 每个 Chunk 末尾需要 4 字节对齐
+		    auto curSize = jsonChunk.data.size();
+		    if (curSize % 4 != 0) {
+			    auto extra = 4 - curSize % 4;
+			    for (size_t n = 0; n < extra; n++) {
+				    jsonChunk.data.push_back(' '); // JSON 利用空格字符对齐
+			    }
+		    }
+	    }
+	    free(json);
+	    m_chunks.emplace_back(std::move(jsonChunk));
+	    m_chunks.emplace_back(std::move(chunk));
+
+	    return true;
 	}
 
 	bool Glb::save(const String& path) {

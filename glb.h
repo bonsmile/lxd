@@ -65,6 +65,8 @@ namespace lxd {
 		bool load(std::string_view buffer);
 		bool loadFromStl(std::string_view buffer);
 	    bool create(const std::vector<MyVec3f>& points, const std::vector<Face>& faces, const std::vector<char>& extraAttribute);
+	    bool create(const std::vector<MyVec3f>& points);
+	    bool create(const std::vector<MyVec3f>& points, const std::variant<std::vector<uint16_t>, std::vector<uint32_t>>& indicesVar, const std::vector<char>& extraAttribute);
 		bool save(const String& path);
 		std::vector<uint8_t> searialize();
 		//
