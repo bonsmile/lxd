@@ -194,7 +194,7 @@ namespace lxd {
 		    bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
 		    m_bufferViews.push_back(bufferView);
 	    }
-	    { // Extra
+	    if (!extraAttribute.empty()) { // Extra
 		    BufferView bufferView{.buffer = 0, .byteOffset = static_cast<int>(chunk.data.size()), .target = 34962};
 		    chunk.data.insert(chunk.data.end(), extraAttribute.cbegin(), extraAttribute.cend());
 		    bufferView.byteLength = static_cast<int>(chunk.data.size() - bufferView.byteOffset);
@@ -252,12 +252,14 @@ namespace lxd {
 			    ksJson_SetUint32(ksJson_AddObjectMember(posAccessor, "componentType"), 5126); // float
 			    ksJson_SetUint64(ksJson_AddObjectMember(posAccessor, "count"), points.size());
 			    ksJson_SetString(ksJson_AddObjectMember(posAccessor, "type"), "VEC3");
-			    ksJson* extraAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
-			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "bufferView"), 2);
-			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "byteOffset"), 0);       // bufferView 内的偏移
-			    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "componentType"), 5120); // char
-			    ksJson_SetUint64(ksJson_AddObjectMember(extraAccessor, "count"), extraAttribute.size());
-			    ksJson_SetString(ksJson_AddObjectMember(extraAccessor, "type"), "SCALAR");
+			    if (!extraAttribute.empty()) {
+				    ksJson* extraAccessor = ksJson_SetObject(ksJson_AddArrayElement(accessors));
+				    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "bufferView"), 2);
+				    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "byteOffset"), 0);       // bufferView 内的偏移
+				    ksJson_SetUint32(ksJson_AddObjectMember(extraAccessor, "componentType"), 5120); // char
+				    ksJson_SetUint64(ksJson_AddObjectMember(extraAccessor, "count"), extraAttribute.size());
+				    ksJson_SetString(ksJson_AddObjectMember(extraAccessor, "type"), "SCALAR");
+				}
 		    }
 		    // meshes
 		    {
@@ -268,7 +270,8 @@ namespace lxd {
 			    ksJson* attributes = ksJson_SetObject(ksJson_AddObjectMember(primitive0, "attributes"));
 			    ksJson_SetUint32(ksJson_AddObjectMember(primitive0, "indices"), 0);    // accessor 0
 			    ksJson_SetUint32(ksJson_AddObjectMember(attributes, "POSITION"), 1);   // accessor 1
-			    ksJson_SetUint32(ksJson_AddObjectMember(attributes, "_EXTRAATTR"), 2); // accessor 2, 自定义顶点属性
+			    if (!extraAttribute.empty())
+					ksJson_SetUint32(ksJson_AddObjectMember(attributes, "_EXTRAATTR"), 2); // accessor 2, 自定义顶点属性
 		    }
 		    // nodes
 		    {
