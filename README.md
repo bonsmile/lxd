@@ -1,14 +1,50 @@
 # C++ 工具集
 
-### Timing
+### 时间和日期
+
+c/c++ 表示时间的数据结构有：`time_t`, `tm`
+
+time_t 是个长整型，表示从 1970.1.1 到某个时间的秒数
+
+`tm` 是 c 里面常用表示日期的数据结构
+```
+struct tm{
+	int tm_sec;
+	int tm_min;
+	int tm_hour;
+	int tm_mday;
+	int tm_mon;
+	int tm_year;
+	int tm_wday;
+	int tm_yday;
+	int tm_isdst;
+};
+```
+
+可以通过 `localtime_s/localtime_r` 将 `time_t` 转换成 `tm`; 通过 `mktime` 将 `tm` 转换成 `time_t`
+
+chrono
+
+
+
+time_t, chrono::system_clock
+
+	const std::time_t t = std::time(nullptr); // usually has "1 second" precision
+    const auto from = std::chrono::system_clock::from_time_t(t);
 
 * Current timestamp in nanoseconds, milliseconds, seconds
 * Date format: YYYYMMDD
 
-### 字符编码
+### String
+
+字符编码转换
 
 * Convert std::wstring to std::string(UTF-8)
 * Convert std::string(UTF-8) to std::wstring
+
+字符串拼接
+
+	std::string result = absl::StrCat("abc", "efg");
 
 ### File IO
 
