@@ -594,7 +594,7 @@ static void ksJson_FreeNode( ksJson * node, const bool freeName )
 	node->memberIndex = 0;
 }
 
-static void ksJson_Destroy( ksJson * rootNode )
+static inline void ksJson_Destroy( ksJson * rootNode )
 {
 	if ( rootNode != NULL /* && is an actual root */ )
 	{
@@ -1226,7 +1226,7 @@ static void ksJson_WriteValue( const ksJson * node, int recursion, char ** buffe
 }
 
 // 'lengthOut' is the length of 'bufferOut' without trailing zero.
-static bool ksJson_WriteToBuffer( const ksJson * rootNode, char ** bufferOut, int * lengthOut )
+static inline bool ksJson_WriteToBuffer( const ksJson * rootNode, char ** bufferOut, int * lengthOut )
 {
 	if ( rootNode == NULL || bufferOut == NULL || lengthOut == NULL )
 	{
@@ -1482,7 +1482,7 @@ static inline const char * ksJson_GetString( const ksJson * node, const char * d
 	return ksJson_IsString( node ) ? node->valueString : defaultValue;
 }
 
-static ksJson * ksJson_AddObjectMember( ksJson * node, const char * name )
+static inline ksJson * ksJson_AddObjectMember( ksJson * node, const char * name )
 {
 	if ( node != NULL && node->type == JSON_OBJECT )
 	{
@@ -1497,7 +1497,7 @@ static ksJson * ksJson_AddObjectMember( ksJson * node, const char * name )
 	return NULL;
 }
 
-static ksJson * ksJson_AddArrayElement( ksJson * node )
+static inline ksJson * ksJson_AddArrayElement( ksJson * node )
 {
 	if ( node != NULL && node->type == JSON_ARRAY )
 	{
