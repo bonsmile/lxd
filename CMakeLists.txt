@@ -2,6 +2,8 @@ cmake_minimum_required( VERSION 3.25.0 )
 
 project(lxd VERSION 2.0.0.0)
 
+find_package(fmt REQUIRED CONFIG)
+
 set(VERSION_RC ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in
                 ${VERSION_RC}
@@ -85,4 +87,4 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 target_compile_features( lxd PRIVATE cxx_std_20)
 target_precompile_headers(lxd PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/defines.h>")
-target_link_libraries(lxd PUBLIC fmt::fmt-header-only)
+target_link_libraries(lxd PUBLIC fmt::fmt)
