@@ -29,7 +29,6 @@ namespace lxd {
     private:
         unsigned long dwSize = 0;
         unsigned long dwDownloaded = 0;
-        bool  bResults = false;
         void* hSession = nullptr;
         void* hConnect = nullptr;
         void* hRequest = nullptr;
@@ -43,7 +42,6 @@ namespace lxd {
     private:
         unsigned long dwSize = 0;
         unsigned long dwDownloaded = 0;
-        bool  bResults = false;
         void* hSession = nullptr;
         void* hConnect = nullptr;
         void* hRequest = nullptr;

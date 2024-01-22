@@ -393,7 +393,7 @@ namespace lxd {
 		 assert(cbSize < MAX_PATH);
 
 		 // Remove filename from fully qualified pathname
-		 auto ok = ::PathCchRemoveFileSpec(buffer.data(), buffer.size());
+		 [[maybe_unused]] auto ok = ::PathCchRemoveFileSpec(buffer.data(), buffer.size());
 		 assert(S_OK == ok);
 		 wchar_t* pEnd;
 		 ok = PathCchAddBackslashEx(buffer.data(), cbSize, &pEnd, nullptr);
