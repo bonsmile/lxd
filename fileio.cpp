@@ -1,6 +1,5 @@
 ﻿#include "fileio.h"
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <fileapi.h>
 #include <pathcch.h>
