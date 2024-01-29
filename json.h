@@ -1450,7 +1450,7 @@ static inline int64_t ksJson_GetInt64( const ksJson * node, const int64_t defaul
 	return	( ( node == NULL ) ?				defaultValue :
 			( ( node->type == JSON_INT ) ?		(int64_t)node->valueInt64 :
 			( ( node->type == JSON_UINT ) ?		(int64_t)JSON_MIN( node->valueUint64, INT64_MAX ) :
-			( ( node->type == JSON_FLOAT ) ?	(int64_t)JSON_CLAMP( node->valueDouble, INT64_MIN, INT64_MAX ) : defaultValue ) ) ) );
+			( ( node->type == JSON_FLOAT ) ?	(int64_t)JSON_CLAMP( node->valueDouble, INT64_MIN, (double)INT64_MAX ) : defaultValue ) ) ) );
 }
 
 static inline uint64_t ksJson_GetUint64( const ksJson * node, const uint64_t defaultValue )
@@ -1458,7 +1458,7 @@ static inline uint64_t ksJson_GetUint64( const ksJson * node, const uint64_t def
 	return	( ( node == NULL ) ?				defaultValue :
 			( ( node->type == JSON_UINT ) ?		(uint64_t)node->valueUint64 :
 			( ( node->type == JSON_INT ) ?		(uint64_t)JSON_CLAMP( node->valueInt64, 0, INT64_MAX ) :
-			( ( node->type == JSON_FLOAT ) ?	(uint64_t)JSON_CLAMP( node->valueDouble, 0, UINT64_MAX ) : defaultValue ) ) ) );
+			( ( node->type == JSON_FLOAT ) ?	(uint64_t)JSON_CLAMP( node->valueDouble, 0, (double)UINT64_MAX ) : defaultValue ) ) ) );
 }
 
 static inline float ksJson_GetFloat( const ksJson * node, const float defaultValue )

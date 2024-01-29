@@ -1,5 +1,4 @@
 #include "http.h"
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <winhttp.h>
 #include "debug.h"
@@ -103,7 +102,7 @@ namespace lxd {
         std::wstring header(L"Content-Type:multipart/form-data; boundary=1SUB64X86GK5");
         std::vector<std::string> optionals;
         DWORD dwBytesWritten = 0;
-        size_t checkSize{};
+	    [[maybe_unused]] size_t checkSize = 0;
         const char* boundary = "--1SUB64X86GK5\r\n";
         const char* disposition = "Content-Disposition: form-data; ";
         const char* newLine = "\r\n";

@@ -63,7 +63,6 @@ limitations under the License.
 #endif
 
 #if defined( OS_WINDOWS )
-	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 #elif defined( OS_LINUX )
 	#include <time.h>							// for timespec

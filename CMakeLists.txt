@@ -2,10 +2,20 @@ cmake_minimum_required( VERSION 3.25.0 )
 
 project(lxd VERSION 2.0.0.0)
 
+# 修复 Intellisense
+# https://discourse.cmake.org/t/imported-projects-dont-resolve-include-paths-in-intellisense/9185
+if (BUILDING_CLANG_SLN)
+	unset(CMAKE_INCLUDE_SYSTEM_FLAG_CXX)
+	unset(_CMAKE_INCLUDE_SYSTEM_FLAG_CXX_WARNING)
+	message("/external:I disabled")
+endif()
+
+find_package(fmt REQUIRED CONFIG)
+
 set(VERSION_RC ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in
-                ${VERSION_RC}
-                NEWLINE_STYLE UNIX)
+				${VERSION_RC}
+				NEWLINE_STYLE UNIX)
 
 message(CMAKE_PREFIX_PATH:${CMAKE_PREFIX_PATH})
 
@@ -68,7 +78,7 @@ else()
 	set(SRC_WIN32 "")
 endif()
 
-add_library( lxd STATIC
+add_library(${PROJECT_NAME} STATIC
 	defines.h
 	${SOURCE_STRINGS}
 	${SRC_COMMON}
@@ -76,13 +86,11 @@ add_library( lxd STATIC
 	${VERSION_RC}
 )
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	target_compile_options(lxd PRIVATE "/utf-8" "/W4" "/wd4251")
-	target_compile_definitions(lxd PRIVATE -DUNICODE -D_UNICODE)
-	target_link_libraries(lxd PUBLIC Winhttp Bcrypt Pathcch)
+	target_compile_options(${PROJECT_NAME} PRIVATE "/utf-8" "/fp:fast")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE)
+	target_link_libraries(${PROJECT_NAME} PUBLIC Winhttp Bcrypt Pathcch)
 endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	target_compile_options(lxd PRIVATE "-Wno-unused-function")
-endif()
-target_compile_features( lxd PRIVATE cxx_std_20)
-target_precompile_headers(lxd PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/defines.h>")
-target_link_libraries(lxd PUBLIC fmt::fmt-header-only)
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_precompile_headers(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/defines.h>")
+target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt)
