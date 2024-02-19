@@ -489,27 +489,23 @@ static ksJson * ksJson_Create()
 static int MemberIndexToMapIndex( int index )
 {
 	index >>= JSON_BASE_ALLOC_PWR;
-#if defined( _MSC_VER )
+
+#if defined(_MSC_VER) && !defined(__clang__)
+	// MSVC
 	unsigned long offset;
-	if ( _BitScanReverse( &offset, (unsigned int) index ) )
-	{
+	if (_BitScanReverse(&offset, (unsigned int)index)) {
 		return offset + 1;
 	}
 	return 0;
-#elif defined( __GNUC__ ) || defined( __clang__ )
-	// TODO:
-	// __builtin_clz 参数为 0 返回值未定义
-	// 考虑使用 https://en.cppreference.com/w/cpp/numeric/countl_zero
-	return index == 0 ? 0 : 32 - __builtin_clz( (unsigned int) index );
 #else
 	int r = 0;
 	int t;
 	index <<= 1;
-	t = ( (~( ( index >> 16 ) + ~0U ) ) >> 27 ) & 0x10; r |= t; index >>= t;
-	t = ( (~( ( index >>  8 ) + ~0U ) ) >> 28 ) & 0x08; r |= t; index >>= t;
-	t = ( (~( ( index >>  4 ) + ~0U ) ) >> 29 ) & 0x04; r |= t; index >>= t;
-	t = ( (~( ( index >>  2 ) + ~0U ) ) >> 30 ) & 0x02; r |= t; index >>= t;
-	return ( r | ( index >> 1 ) );
+	t = ((~((index >> 16) + ~0U)) >> 27) & 0x10; r |= t; index >>= t;
+	t = ((~((index >>  8) + ~0U)) >> 28) & 0x08; r |= t; index >>= t;
+	t = ((~((index >>  4) + ~0U)) >> 29) & 0x04; r |= t; index >>= t;
+	t = ((~((index >>  2) + ~0U)) >> 30) & 0x02; r |= t; index >>= t;
+	return (r | (index >> 1));
 #endif
 }
 
