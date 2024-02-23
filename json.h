@@ -873,8 +873,8 @@ static const char * ksJson_ParseNumber( JsonType_t * type, int64_t * valueInt64,
 		{
 			const int pow0 = 308 + 16;
 			const int pow1 = 308 * 2 + exp - pow0;
-			assert( pow0 >= 0 && pow0 < sizeof( json_pow10 ) / sizeof( json_pow10[0] ) );
-			assert( pow1 >= 0 && pow1 < sizeof( json_pow10 ) / sizeof( json_pow10[0] ) );
+			assert(pow0 >= 0 && (unsigned long long)pow0 < sizeof(json_pow10) / sizeof(json_pow10[0]));
+			assert(pow1 >= 0 && (unsigned long long)pow1 < sizeof(json_pow10) / sizeof(json_pow10[0]));
 			const double v = doubleValue * json_pow10[pow0] * json_pow10[pow1];
 			*valueDouble = sign * ( v <= DBL_MAX ? v : DBL_MAX );
 		}
@@ -882,8 +882,8 @@ static const char * ksJson_ParseNumber( JsonType_t * type, int64_t * valueInt64,
 		{
 			const int pow0 = 16;
 			const int pow1 = 308 * 2 + exp - pow0;
-			assert( pow0 >= 0 && pow0 < sizeof( json_pow10 ) / sizeof( json_pow10[0] ) );
-			assert( pow1 >= 0 && pow1 < sizeof( json_pow10 ) / sizeof( json_pow10[0] ) );
+			assert(pow0 >= 0 && (unsigned long long)pow0 < sizeof(json_pow10) / sizeof(json_pow10[0]));
+			assert(pow1 >= 0 && (unsigned long long)pow1 < sizeof(json_pow10) / sizeof(json_pow10[0]));
 			*valueDouble = sign * doubleValue * json_pow10[pow0] * json_pow10[pow1];
 		}
 		else
