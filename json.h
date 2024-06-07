@@ -511,6 +511,10 @@ static int MemberIndexToMapIndex( int index )
 
 static int MapMemberOffset( int mapIndex )
 {
+	if (mapIndex <= 0) {
+		return 0;
+	}
+
 	const int offset = ( 1 << ( mapIndex - 1 ) ) << JSON_BASE_ALLOC_PWR;
 	assert( mapIndex >= 1 || offset == 0 );	// Protect againt negative shift not producing zero.
 	return offset;
