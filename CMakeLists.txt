@@ -28,7 +28,6 @@ set(SOURCE_STRINGS
 	strings/numbers.cc
 	strings/str_split_internal.h
 	strings/str_split.h
-	strings/str_split.cc
 	strings/resize_uninitialized.h
 	strings/str_cat.h
 	strings/str_cat.cc

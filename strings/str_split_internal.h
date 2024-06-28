@@ -51,27 +51,28 @@ namespace absl {
         // is implicitly constructible from, except for rvalue strings.  This means it
         // can be used as a function parameter in places where passing a temporary
         // string might cause memory lifetime issues.
+        template <typename CharT>
         class ConvertibleToStringView {
         public:
             ConvertibleToStringView(const char* s)  // NOLINT(runtime/explicit)
                 : value_(s) {
             }
             ConvertibleToStringView(char* s) : value_(s) {}  // NOLINT(runtime/explicit)
-            ConvertibleToStringView(std::string_view s)     // NOLINT(runtime/explicit)
+            ConvertibleToStringView(std::basic_string_view<CharT> s)     // NOLINT(runtime/explicit)
                 : value_(s) {
             }
-            ConvertibleToStringView(const std::string& s)  // NOLINT(runtime/explicit)
+            ConvertibleToStringView(const std::basic_string<CharT>& s)  // NOLINT(runtime/explicit)
                 : value_(s) {
             }
 
             // Disable conversion from rvalue strings.
-            ConvertibleToStringView(std::string&& s) = delete;
-            ConvertibleToStringView(const std::string&& s) = delete;
+            ConvertibleToStringView(std::basic_string<CharT>&& s) = delete;
+            ConvertibleToStringView(const std::basic_string<CharT>&& s) = delete;
 
-            std::string_view value() const { return value_; }
+            std::basic_string_view<CharT> value() const { return value_; }
 
         private:
-            std::string_view value_;
+            std::basic_string_view<CharT> value_;
         };
 
         // An iterator that enumerates the parts of a string from a Splitter. The text
@@ -80,11 +81,11 @@ namespace absl {
         // Splitter instance.
         //
         // This class is NOT part of the public splitting API.
-        template <typename Splitter>
+        template <typename Splitter, typename CharT>
         class SplitIterator {
         public:
             using iterator_category = std::input_iterator_tag;
-            using value_type = std::string_view;
+            using value_type = std::basic_string_view<CharT>;
             using difference_type = ptrdiff_t;
             using pointer = const value_type*;
             using reference = const value_type&;
@@ -129,8 +130,8 @@ namespace absl {
                         state_ = kEndState;
                         return *this;
                     }
-                    const std::string_view text = splitter_->text();
-                    const std::string_view d = delimiter_.Find(text, pos_);
+                    const std::basic_string_view<CharT> text = splitter_->text();
+                    const std::basic_string_view<CharT> d = delimiter_.Find(text, pos_);
                     if(d.data() == text.data() + text.size()) state_ = kLastState;
                     curr_ = text.substr(pos_, d.data() - (text.data() + pos_));
                     pos_ += curr_.size() + d.size();
@@ -155,7 +156,7 @@ namespace absl {
         private:
             size_t pos_;
             State state_;
-            std::string_view curr_;
+            std::basic_string_view<CharT> curr_;
             const Splitter* splitter_;
             typename Splitter::DelimiterType delimiter_;
             typename Splitter::PredicateType predicate_;
@@ -259,12 +260,12 @@ namespace absl {
         // The StringType parameter can be either string_view or string, depending on
         // whether the Splitter refers to a string stored elsewhere, or if the string
         // resides inside the Splitter itself.
-        template <typename Delimiter, typename Predicate, typename StringType>
+        template <typename Delimiter, typename Predicate, typename StringType, typename CharT>
         class Splitter {
         public:
             using DelimiterType = Delimiter;
             using PredicateType = Predicate;
-            using const_iterator = strings_internal::SplitIterator<Splitter>;
+            using const_iterator = strings_internal::SplitIterator<Splitter, CharT>;
             using value_type = typename std::iterator_traits<const_iterator>::value_type;
 
             Splitter(StringType input_text, Delimiter d, Predicate p)
@@ -273,7 +274,7 @@ namespace absl {
                 predicate_(std::move(p)) {
             }
 
-            std::string_view text() const { return text_; }
+            std::basic_string_view<CharT> text() const { return text_; }
             const Delimiter& delimiter() const { return delimiter_; }
             const Predicate& predicate() const { return predicate_; }
 
@@ -299,7 +300,7 @@ namespace absl {
             // corresponding value.
             template <typename First, typename Second>
             operator std::pair<First, Second>() const {  // NOLINT(runtime/explicit)
-                std::string_view first, second;
+                std::basic_string_view<CharT> first, second;
                 auto it = begin();
                 if(it != end()) {
                     first = *it;
@@ -336,18 +337,18 @@ namespace absl {
             // std::vector<std::string_view>. In this case we first split the results to
             // a small array of std::string_view on the stack, to reduce reallocations.
             template <typename A>
-            struct ConvertToContainer<std::vector<std::string_view, A>,
-                std::string_view, false> {
-                std::vector<std::string_view, A> operator()(
+            struct ConvertToContainer<std::vector<std::basic_string_view<CharT>, A>,
+                std::basic_string_view<CharT>, false> {
+                std::vector<std::basic_string_view<CharT>, A> operator()(
                     const Splitter& splitter) const {
                     struct raw_view {
-                        const char* data;
+                        const CharT* data;
                         size_t size;
-                        operator std::string_view() const {  // NOLINT(runtime/explicit)
+                        operator std::basic_string_view<CharT>() const {  // NOLINT(runtime/explicit)
                             return {data, size};
                         }
                     };
-                    std::vector<std::string_view, A> v;
+                    std::vector<std::basic_string_view<CharT>, A> v;
                     std::array<raw_view, 16> ar;
                     for(auto it = splitter.begin(); !it.at_end();) {
                         size_t index = 0;
@@ -369,10 +370,10 @@ namespace absl {
             // so the returned std::vector<std::string> can have space reserved to avoid
             // std::string moves.
             template <typename A>
-            struct ConvertToContainer<std::vector<std::string, A>, std::string, false> {
-                std::vector<std::string, A> operator()(const Splitter& splitter) const {
-                    const std::vector<std::string_view> v = splitter;
-                    return std::vector<std::string, A>(v.begin(), v.end());
+            struct ConvertToContainer<std::vector<std::basic_string<CharT>, A>, std::basic_string<CharT>, false> {
+                std::vector<std::basic_string<CharT>, A> operator()(const Splitter& splitter) const {
+                    const std::vector<std::basic_string_view<CharT>> v = splitter;
+                    return std::vector<std::basic_string<CharT>, A>(v.begin(), v.end());
                 }
             };
 

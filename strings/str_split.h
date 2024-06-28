@@ -42,6 +42,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cassert>
 
 #include "str_split_internal.h"
 #include "ascii.h"
@@ -101,6 +102,52 @@ namespace absl {
 //     }
 //   };
 
+// This GenericFind() template function encapsulates the finding algorithm
+// shared between the ByString and ByAnyChar delimiters. The FindPolicy
+// template parameter allows each delimiter to customize the actual find
+// function to use and the length of the found delimiter. For example, the
+// Literal delimiter will ultimately use std::string_view::find(), and the
+// AnyOf delimiter will use std::string_view::find_first_of().
+template <typename CharT, typename FindPolicy>
+std::basic_string_view<CharT> GenericFind(std::basic_string_view<CharT> text,
+                              std::basic_string_view<CharT> delimiter, size_t pos,
+                              FindPolicy find_policy) {
+    if (delimiter.empty() && text.length() > 0) {
+        // Special case for empty string delimiters: always return a zero-length
+        // std::string_view referring to the item at position 1 past pos.
+        return std::basic_string_view<CharT>(text.data() + pos + 1, 0);
+    }
+    size_t found_pos = std::basic_string_view<CharT>::npos;
+    std::basic_string_view<CharT> found(text.data() + text.size(),
+                            0);  // By default, not found
+    found_pos = find_policy.Find(text, delimiter, pos);
+    if (found_pos != std::basic_string_view<CharT>::npos) {
+        found = std::basic_string_view<CharT>(text.data() + found_pos,
+                                  find_policy.Length(delimiter));
+    }
+    return found;
+}
+
+// Finds using std::string_view::find(), therefore the length of the found
+// delimiter is delimiter.length().
+template <typename CharT>
+struct LiteralPolicy {
+    size_t Find(std::basic_string_view<CharT> text, std::basic_string_view<CharT> delimiter, size_t pos) {
+        return text.find(delimiter, pos);
+    }
+    size_t Length(std::basic_string_view<CharT> delimiter) { return delimiter.length(); }
+};
+
+// Finds using std::string_view::find_first_of(), therefore the length of the
+// found delimiter is 1.
+template <typename CharT>
+struct AnyOfPolicy {
+    size_t Find(std::basic_string_view<CharT> text, std::basic_string_view<CharT> delimiter, size_t pos) {
+        return text.find_first_of(delimiter, pos);
+    }
+    size_t Length(std::basic_string_view<CharT> /* delimiter */) { return 1; }
+};
+
 // ByString
 //
 // A sub-string delimiter. If `StrSplit()` is passed a string in place of a
@@ -118,13 +165,24 @@ namespace absl {
 //   std::vector<std::string> v2 = absl::StrSplit("a, b, c",
 //                                                ByString(", "));
 //   // v[0] == "a", v[1] == "b", v[2] == "c"
-class DLL_PUBLIC ByString {
- public:
-  explicit ByString(std::string_view sp);
-  std::string_view Find(std::string_view text, size_t pos) const;
+template <typename CharT>
+class ByString {
+public:
+    explicit ByString(std::basic_string_view<CharT> sp) : delimiter_(sp) {}
+    std::basic_string_view<CharT> Find(std::basic_string_view<CharT> text, size_t pos) const {
+        if (delimiter_.length() == 1) {
+            // Much faster to call find on a single character than on an
+            // std::string_view.
+            size_t found_pos = text.find(delimiter_[0], pos);
+            if (found_pos == std::basic_string_view<CharT>::npos)
+                return std::basic_string_view<CharT>(text.data() + text.size(), 0);
+            return text.substr(found_pos, 1);
+        }
+        return GenericFind<CharT>(text, delimiter_, pos, LiteralPolicy<CharT>());
+    }
 
- private:
-  const std::string delimiter_;
+private:
+    const std::basic_string<CharT> delimiter_;
 };
 
 // ByChar
@@ -150,13 +208,20 @@ class DLL_PUBLIC ByString {
 //   using absl::ByChar;
 //   std::vector<std::string> v = absl::StrSplit("a-b", ByChar('-'));
 //
-class DLL_PUBLIC ByChar {
+template <typename CharT>
+class ByChar {
  public:
   explicit ByChar(char c) : c_(c) {}
-  std::string_view Find(std::string_view text, size_t pos) const;
+
+  std::basic_string_view<CharT> Find(std::basic_string_view<CharT> text, size_t pos) const {
+      size_t found_pos = text.find(c_, pos);
+      if (found_pos == std::string_view::npos)
+          return std::string_view(text.data() + text.size(), 0);
+      return text.substr(found_pos, 1);
+  }
 
  private:
-  char c_;
+     CharT c_;
 };
 
 // ByAnyChar
@@ -176,10 +241,12 @@ class DLL_PUBLIC ByChar {
 // If `ByAnyChar` is given the empty string, it behaves exactly like
 // `ByString` and matches each individual character in the input string.
 //
-class DLL_PUBLIC ByAnyChar {
+class ByAnyChar {
  public:
-  explicit ByAnyChar(std::string_view sp);
-  std::string_view Find(std::string_view text, size_t pos) const;
+     explicit ByAnyChar(std::string_view sp) : delimiters_(sp) {}
+  std::string_view Find(std::string_view text, size_t pos) const {
+      return GenericFind<char>(text, delimiters_, pos, AnyOfPolicy<char>());
+  }
 
  private:
   const std::string delimiters_;
@@ -207,10 +274,24 @@ class DLL_PUBLIC ByAnyChar {
 //   std::vector<std::string> v = absl::StrSplit("12345", ByLength(2));
 //
 //   // v[0] == "12", v[1] == "34", v[2] == "5"
-class DLL_PUBLIC ByLength {
+class ByLength {
  public:
-  explicit ByLength(ptrdiff_t length);
-  std::string_view Find(std::string_view text, size_t pos) const;
+     //
+     // ByLength
+     //
+     explicit ByLength(ptrdiff_t length) : length_(length) {
+         assert(length > 0);
+     }
+  std::string_view Find(std::string_view text, size_t pos) const {
+      pos = std::min(pos, text.size());  // truncate `pos`
+      std::string_view substr = text.substr(pos);
+      // If the string is shorter than the chunk size we say we
+      // "can't find the delimiter" so this will be the last chunk.
+      if (substr.length() <= static_cast<size_t>(length_))
+          return std::string_view(text.data() + text.size(), 0);
+
+      return std::string_view(substr.data() + length_, 0);
+  }
 
  private:
   const ptrdiff_t length_;
@@ -232,23 +313,43 @@ struct SelectDelimiter {
 
 template <>
 struct SelectDelimiter<char> {
-  using type = ByChar;
+  using type = ByChar<char>;
+};
+template <>
+struct SelectDelimiter<wchar_t> {
+    using type = ByChar<wchar_t>;
 };
 template <>
 struct SelectDelimiter<char*> {
-  using type = ByString;
+  using type = ByString<char>;
+};
+template <>
+struct SelectDelimiter<wchar_t*> {
+    using type = ByString<wchar_t>;
 };
 template <>
 struct SelectDelimiter<const char*> {
-  using type = ByString;
+  using type = ByString<char>;
+};
+template <>
+struct SelectDelimiter<const wchar_t*> {
+    using type = ByString<wchar_t>;
 };
 template <>
 struct SelectDelimiter<std::string_view> {
-  using type = ByString;
+  using type = ByString<char>;
+};
+template <>
+struct SelectDelimiter<std::wstring_view> {
+    using type = ByString<wchar_t>;
 };
 template <>
 struct SelectDelimiter<std::string> {
-  using type = ByString;
+  using type = ByString<char>;
+};
+template <>
+struct SelectDelimiter<std::wstring> {
+    using type = ByString<wchar_t>;
 };
 
 // Wraps another delimiter and sets a max number of matches for that delimiter.
@@ -323,8 +424,9 @@ MaxSplits(Delimiter delimiter, int limit) {
 //  std::vector<std::string> v = absl::StrSplit(" a , ,,b,", ',', AllowEmpty());
 //
 //  // v[0] == " a ", v[1] == " ", v[2] == "", v[3] = "b", v[4] == ""
+template <typename CharT>
 struct AllowEmpty {
-  bool operator()(std::string_view) const { return true; }
+  bool operator()(std::basic_string_view<CharT>) const { return true; }
 };
 
 // SkipEmpty()
@@ -341,8 +443,9 @@ struct AllowEmpty {
 // Note: `SkipEmpty()` does not consider a string containing only whitespace
 // to be empty. To skip such whitespace as well, use the `SkipWhitespace()`
 // predicate.
+template <typename CharT>
 struct SkipEmpty {
-  bool operator()(std::string_view sp) const { return !sp.empty(); }
+  bool operator()(std::basic_string_view<CharT> sp) const { return !sp.empty(); }
 };
 
 // SkipWhitespace()
@@ -359,8 +462,9 @@ struct SkipEmpty {
 //   // SkipEmpty() would return whitespace elements
 //   std::vector<std::string> v = absl::StrSplit(" a , ,,b,", ',', SkipEmpty());
 //   // v[0] == " a ", v[1] == " ", v[2] == "b"
+template <typename CharT>
 struct SkipWhitespace {
-  bool operator()(std::string_view sp) const {
+  bool operator()(std::basic_string_view<CharT> sp) const {
     sp = absl::StripAsciiWhitespace(sp);
     return !sp.empty();
   }
@@ -369,7 +473,9 @@ struct SkipWhitespace {
 template <typename T>
 using EnableSplitIfString =
     typename std::enable_if<std::is_same<T, std::string>::value ||
-                            std::is_same<T, const std::string>::value,
+                            std::is_same<T, const std::string>::value || 
+                            std::is_same<T, std::wstring>::value ||
+                            std::is_same<T, const std::wstring>::value,
                             int>::type;
 
 //------------------------------------------------------------------------------
@@ -493,78 +599,100 @@ using EnableSplitIfString =
 
 template <typename Delimiter>
 strings_internal::Splitter<
-    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty,
-    std::string_view>
-    DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView text, Delimiter d);
-
-template <typename Delimiter>
-strings_internal::Splitter<
-    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty,
-    std::string_view>
-StrSplit(strings_internal::ConvertibleToStringView text, Delimiter d) {
+    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty<char>,
+    std::string_view, char>
+DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView<char> text, Delimiter d) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
   return strings_internal::Splitter<DelimiterType, AllowEmpty,
-                                    std::string_view>(
+                                    std::string_view, char>(
       text.value(), DelimiterType(d), AllowEmpty());
 }
 
-template <typename Delimiter, typename StringType,
-    EnableSplitIfString<StringType> = 0>
-    strings_internal::Splitter<
-    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty,
-    std::string>
-    DLL_PUBLIC StrSplit(StringType&& text, Delimiter d);
+template <typename Delimiter>
+strings_internal::Splitter<
+    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty<wchar_t>,
+    std::wstring_view, wchar_t>
+DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView<wchar_t> text, Delimiter d) {
+    using DelimiterType =
+        typename strings_internal::SelectDelimiter<Delimiter>::type;
+    return strings_internal::Splitter<DelimiterType, AllowEmpty<wchar_t>,
+        std::wstring_view, wchar_t>(
+text.value(), DelimiterType(d), AllowEmpty<wchar_t>());
+}
 
 template <typename Delimiter, typename StringType,
           EnableSplitIfString<StringType>>
 strings_internal::Splitter<
-    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty,
-    std::string>
-StrSplit(StringType&& text, Delimiter d) {
+    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty<char>,
+    std::string, char>
+DLL_PUBLIC StrSplit(StringType&& text, Delimiter d) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
-  return strings_internal::Splitter<DelimiterType, AllowEmpty, std::string>(
-      std::move(text), DelimiterType(d), AllowEmpty());
+  return strings_internal::Splitter<DelimiterType, AllowEmpty<char>, std::string>(
+      std::move(text), DelimiterType(d), AllowEmpty<char>());
+}
+
+template <typename Delimiter, typename StringType,
+    EnableSplitIfString<StringType>>
+    strings_internal::Splitter<
+    typename strings_internal::SelectDelimiter<Delimiter>::type, AllowEmpty<wchar_t>,
+    std::wstring, wchar_t>
+   DLL_PUBLIC StrSplit(StringType&& text, Delimiter d) {
+    using DelimiterType =
+        typename strings_internal::SelectDelimiter<Delimiter>::type;
+    return strings_internal::Splitter<DelimiterType, AllowEmpty<wchar_t>, std::wstring>(
+        std::move(text), DelimiterType(d), AllowEmpty<wchar_t>());
 }
 
 template <typename Delimiter, typename Predicate>
 strings_internal::Splitter<
     typename strings_internal::SelectDelimiter<Delimiter>::type, Predicate,
-    std::string_view>
-    DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView text, Delimiter d,
-                        Predicate p);
-
-template <typename Delimiter, typename Predicate>
-strings_internal::Splitter<
-    typename strings_internal::SelectDelimiter<Delimiter>::type, Predicate,
-    std::string_view>
-StrSplit(strings_internal::ConvertibleToStringView text, Delimiter d,
+    std::string_view, char>
+DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView<char> text, Delimiter d,
          Predicate p) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
   return strings_internal::Splitter<DelimiterType, Predicate,
-                                    std::string_view>(
+                                    std::string_view, char>(
       text.value(), DelimiterType(d), std::move(p));
 }
 
-template <typename Delimiter, typename Predicate, typename StringType,
-    EnableSplitIfString<StringType> = 0>
-    strings_internal::Splitter<
+template <typename Delimiter, typename Predicate>
+strings_internal::Splitter<
     typename strings_internal::SelectDelimiter<Delimiter>::type, Predicate,
-    std::string>
-    DLL_PUBLIC StrSplit(StringType&& text, Delimiter d, Predicate p);
+    std::wstring_view, wchar_t>
+   DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView<wchar_t> text, Delimiter d,
+             Predicate p) {
+    using DelimiterType =
+        typename strings_internal::SelectDelimiter<Delimiter>::type;
+    return strings_internal::Splitter<DelimiterType, Predicate,
+        std::wstring_view, wchar_t>(
+text.value(), DelimiterType(d), std::move(p));
+}
 
 template <typename Delimiter, typename Predicate, typename StringType,
           EnableSplitIfString<StringType>>
 strings_internal::Splitter<
     typename strings_internal::SelectDelimiter<Delimiter>::type, Predicate,
-    std::string>
-StrSplit(StringType&& text, Delimiter d, Predicate p) {
+    std::string, char>
+DLL_PUBLIC StrSplit(StringType&& text, Delimiter d, Predicate p) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
   return strings_internal::Splitter<DelimiterType, Predicate, std::string>(
       std::move(text), DelimiterType(d), std::move(p));
+}
+
+template <typename Delimiter, typename Predicate, typename StringType,
+    EnableSplitIfString<StringType>>
+    strings_internal::Splitter<
+    typename strings_internal::SelectDelimiter<Delimiter>::type, Predicate,
+    std::wstring, wchar_t>
+DLL_PUBLIC StrSplit(StringType&& text, Delimiter d, Predicate p) {
+    using DelimiterType =
+        typename strings_internal::SelectDelimiter<Delimiter>::type;
+    return strings_internal::Splitter<DelimiterType, Predicate, std::wstring>(
+        std::move(text), DelimiterType(d), std::move(p));
 }
 
 //ABSL_NAMESPACE_END
