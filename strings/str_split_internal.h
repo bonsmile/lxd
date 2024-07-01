@@ -212,28 +212,24 @@ namespace absl {
         // C++11 std::vector<T>::operator= is overloaded to take either a std::vector<T>
         // or an std::initializer_list<T>).
 
-        template <typename C, bool has_value_type, bool has_mapped_type>
+        template <typename CharT, typename C, bool has_value_type, bool has_mapped_type>
         struct SplitterIsConvertibleToImpl : std::false_type {};
 
-        template <typename C>
-	    struct SplitterIsConvertibleToImpl<C, true, false> : std::disjunction<
-            std::is_constructible<typename C::value_type, std::string_view>,
-            std::is_constructible<typename C::value_type, std::wstring_view>> {
+        template<typename CharT, typename C>
+	    struct SplitterIsConvertibleToImpl<CharT, C, true, false> : 
+            std::is_constructible<typename C::value_type, std::basic_string_view<CharT>> {
         };
 
-        template <typename C>
-        struct SplitterIsConvertibleToImpl<C, true, true>
-            : std::disjunction<std::conjunction<
-                std::is_constructible<typename C::key_type, std::string_view>,
-                std::is_constructible<typename C::mapped_type, std::string_view>
-            >, std::conjunction<
-                std::is_constructible<typename C::key_type, std::wstring_view>,
-                std::is_constructible<typename C::mapped_type, std::wstring_view>>> {};
+        template<typename CharT, typename C>
+        struct SplitterIsConvertibleToImpl<CharT, C, true, true>
+            : std::conjunction<
+            std::is_constructible<typename C::key_type, std::basic_string_view<CharT>>,
+            std::is_constructible<typename C::mapped_type, std::basic_string_view<CharT>>> {};
 
-        template <typename C>
+        template<typename CharT, typename C>
         struct SplitterIsConvertibleTo
             : SplitterIsConvertibleToImpl<
-            C,
+            CharT, C,
 #ifdef _GLIBCXX_DEBUG
             !IsStrictlyBaseOfAndConvertibleToSTLContainer<C>::value&&
 #endif  // _GLIBCXX_DEBUG
@@ -292,7 +288,7 @@ namespace absl {
             // that the splitter is convertible to.
             template <typename Container,
                 typename = typename std::enable_if<
-                SplitterIsConvertibleTo<Container>::value>::type>
+                SplitterIsConvertibleTo<CharT, Container>::value>::type>
                 operator Container() const {  // NOLINT(runtime/explicit)
                 return ConvertToContainer<Container, typename Container::value_type,
                     HasMappedType<Container>::value>()(*this);
