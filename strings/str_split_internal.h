@@ -216,15 +216,19 @@ namespace absl {
         struct SplitterIsConvertibleToImpl : std::false_type {};
 
         template <typename C>
-        struct SplitterIsConvertibleToImpl<C, true, false>
-            : std::is_constructible<typename C::value_type, std::string_view> {
+	    struct SplitterIsConvertibleToImpl<C, true, false> : std::disjunction<
+            std::is_constructible<typename C::value_type, std::string_view>,
+            std::is_constructible<typename C::value_type, std::wstring_view>> {
         };
 
         template <typename C>
         struct SplitterIsConvertibleToImpl<C, true, true>
-            : std::conjunction<
-            std::is_constructible<typename C::key_type, std::string_view>,
-            std::is_constructible<typename C::mapped_type, std::string_view>> {};
+            : std::disjunction<std::conjunction<
+                std::is_constructible<typename C::key_type, std::string_view>,
+                std::is_constructible<typename C::mapped_type, std::string_view>
+            >, std::conjunction<
+                std::is_constructible<typename C::key_type, std::wstring_view>,
+                std::is_constructible<typename C::mapped_type, std::wstring_view>>> {};
 
         template <typename C>
         struct SplitterIsConvertibleTo

@@ -604,9 +604,9 @@ strings_internal::Splitter<
 DLL_PUBLIC StrSplit(strings_internal::ConvertibleToStringView<char> text, Delimiter d) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
-  return strings_internal::Splitter<DelimiterType, AllowEmpty,
+  return strings_internal::Splitter<DelimiterType, AllowEmpty<char>,
                                     std::string_view, char>(
-      text.value(), DelimiterType(d), AllowEmpty());
+	  text.value(), DelimiterType(d), AllowEmpty<char>());
 }
 
 template <typename Delimiter>
