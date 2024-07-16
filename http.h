@@ -27,8 +27,8 @@ namespace lxd {
                      const char* authID = nullptr, const char* authSecret = nullptr);
         PostFormdata(const wchar_t* host, const wchar_t* path, bool https,
                      std::string& result, const std::vector<std::pair<std::string_view, std::string_view>>& formData,
-                     const std::vector<std::pair<std::string_view, std::string_view>>& files = {},
-                     const std::vector<std::pair<std::string_view, std::string_view>>& headers = {});
+                     const std::vector<std::pair<std::string_view, std::string_view>>& files,
+                     const std::vector<std::pair<std::string_view, std::string_view>>& headers);
         ~PostFormdata();
     private:
         void _Post(const wchar_t* host, const wchar_t* path, bool https,
