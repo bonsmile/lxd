@@ -87,7 +87,7 @@ add_library(${PROJECT_NAME} STATIC
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_compile_options(${PROJECT_NAME} PRIVATE "/utf-8" "/fp:fast")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE -DUNICODE -D_UNICODE)
-	target_link_libraries(${PROJECT_NAME} PUBLIC Winhttp Bcrypt Pathcch)
+	target_link_libraries(${PROJECT_NAME} PUBLIC Winhttp Bcrypt)
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

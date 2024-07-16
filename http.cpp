@@ -94,15 +94,62 @@ namespace lxd {
     }
 
     PostFormdata::PostFormdata(const wchar_t* host, const wchar_t* path, bool https,
-                               std::string& result, const std::vector<std::pair<std::string_view, std::string_view>>& pairs,
+                               std::string& result, const std::vector<std::pair<std::string_view, std::string_view>>& formData,
                                const std::vector<std::pair<std::string_view, std::string_view>>& files,
                                const char* authID, const char* authSecret) {
+        std::wstring header;
+
+        if (authID && authSecret) {
+            auto idAndSecret = fmt::format("{}:{}", authID, authSecret);
+            auto ecSize = lxd::Base64_EncodeSizeInBytes(idAndSecret.size());
+            std::string base64;
+            base64.resize(ecSize);
+            lxd::Base64_Encode(base64.data(), reinterpret_cast<const unsigned char*>(idAndSecret.data()), idAndSecret.size());
+            header = fmt::format(L"Authorization: Basic {}\r\n", lxd::utf8_decode(base64));
+        }
+
+        _Post(host, path, https, result, formData, files, header);
+    }
+
+    PostFormdata::PostFormdata(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        std::string& result,
+        const std::vector<std::pair<std::string_view, std::string_view>>& formData,
+        const std::vector<std::pair<std::string_view, std::string_view>>& files,
+        const std::vector<std::pair<std::string_view, std::string_view>>& headers
+    ) {
+        std::wstring header;
+        for (const auto& pair : headers) {
+            header.append(fmt::format(L"{}: {}\r\n", lxd::utf8_decode(pair.first), lxd::utf8_decode(pair.second)));
+        }
+
+        _Post(host, path, https, result, formData, files, header);
+    }
+
+    PostFormdata::~PostFormdata() {
+        // Close any open handles.
+        if(hRequest) WinHttpCloseHandle(hRequest);
+        if(hConnect) WinHttpCloseHandle(hConnect);
+        if(hSession) WinHttpCloseHandle(hSession);
+    }
+
+    void PostFormdata::_Post(
+        const wchar_t* host,
+        const wchar_t* path,
+        bool https,
+        std::string& result,
+        const std::vector<std::pair<std::string_view, std::string_view>>& formData,
+        const std::vector<std::pair<std::string_view, std::string_view>>& files,
+        std::wstring& header
+    ) {
         // Fix `skipped by goto` error
         std::vector<std::pair<std::string_view, std::string_view>> additionals;
-        std::wstring header(L"Content-Type:multipart/form-data; boundary=1SUB64X86GK5");
+        
         std::vector<std::string> optionals;
         DWORD dwBytesWritten = 0;
-	    [[maybe_unused]] size_t checkSize = 0;
+        [[maybe_unused]] size_t checkSize = 0;
         const char* boundary = "--1SUB64X86GK5\r\n";
         const char* disposition = "Content-Disposition: form-data; ";
         const char* newLine = "\r\n";
@@ -110,45 +157,40 @@ namespace lxd {
         size_t totalSize{};
         // Specify an HTTP server.
         hSession = WinHttpOpen(L"lxd with WinHTTP Sync /1.0",
-                                         WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                                         WINHTTP_NO_PROXY_NAME,
-                                         WINHTTP_NO_PROXY_BYPASS,
-                                         0);
+            WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+            WINHTTP_NO_PROXY_NAME,
+            WINHTTP_NO_PROXY_BYPASS,
+            0);
 
         // Connect
-        if(hSession) {
+        if (hSession) {
             hConnect = WinHttpConnect(hSession, host,
-                                      INTERNET_DEFAULT_HTTPS_PORT, 0);
-        } else goto error;
-            
+                INTERNET_DEFAULT_HTTPS_PORT, 0);
+        }
+        else goto error;
+
 
         // Create an HTTP request handle.
-        if(hConnect) {
+        if (hConnect) {
             hRequest = WinHttpOpenRequest(hConnect,
-                                          L"POST",
-                                          path,
-                                          NULL, WINHTTP_NO_REFERER,
-                                          WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                          https ? WINHTTP_FLAG_SECURE : 0);
-        } else goto error;
-
-        if(authID && authSecret) {
-            auto idAndSecret = fmt::format("{}:{}", authID, authSecret);
-            auto ecSize = lxd::Base64_EncodeSizeInBytes(idAndSecret.size());
-            std::string base64;
-            base64.resize(ecSize);
-            lxd::Base64_Encode(base64.data(), reinterpret_cast<const unsigned char*>(idAndSecret.data()), idAndSecret.size());
-            header = fmt::format(L"Authorization: Basic {}\r\n{}", lxd::utf8_decode(base64), header);
+                L"POST",
+                path,
+                NULL, WINHTTP_NO_REFERER,
+                WINHTTP_DEFAULT_ACCEPT_TYPES,
+                https ? WINHTTP_FLAG_SECURE : 0);
         }
+        else goto error;
+
+        
         // optional key/values
-        for(auto const& pair : pairs) {
+        for (auto const& pair : formData) {
             auto str = fmt::format("{}{}name=\"{}\"\r\n\r\n{}", boundary, disposition, pair.first, pair.second);
             totalSize += str.size();
             optionals.emplace_back(std::move(str));
         }
         //optional = fmt::format("{}{}", optional, boundary);
         // additional
-        for(auto const& file : files) {
+        for (auto const& file : files) {
             auto str = fmt::format("{}{}name=\"StlBinary\"; filename=\"{}\"\r\nContent-Type: application/zip\r\n\r\n", boundary, disposition, file.first);
             totalSize += str.size();
             totalSize += file.second.size();
@@ -159,92 +201,88 @@ namespace lxd {
         totalSize += strlen(finalBody);
 
         // Send a request.
-        if(!WinHttpAddRequestHeaders(
+        header.append(L"Content-Type:multipart/form-data; boundary=1SUB64X86GK5");
+        if (!WinHttpAddRequestHeaders(
             hRequest,
             header.c_str(),
             static_cast<DWORD>(header.size()),
             WINHTTP_ADDREQ_FLAG_ADD
         )) goto error;
 
-        if(!WinHttpSendRequest(hRequest,
-                               WINHTTP_NO_ADDITIONAL_HEADERS,
-                               0,
-                               WINHTTP_NO_REQUEST_DATA,
-                               0,
-                               static_cast<DWORD>(totalSize),
-                               NULL)) goto error;
-        
-        for(auto const& optional : optionals) {
-            if(!WinHttpWriteData(hRequest, optional.c_str(),
-                                 static_cast<DWORD>(optional.size()),
-                                 &dwBytesWritten)) goto error;
+        if (!WinHttpSendRequest(hRequest,
+            WINHTTP_NO_ADDITIONAL_HEADERS,
+            0,
+            WINHTTP_NO_REQUEST_DATA,
+            0,
+            static_cast<DWORD>(totalSize),
+            NULL)) goto error;
+
+        for (auto const& optional : optionals) {
+            if (!WinHttpWriteData(hRequest, optional.c_str(),
+                static_cast<DWORD>(optional.size()),
+                &dwBytesWritten)) goto error;
             checkSize += optional.size();
-            if(!WinHttpWriteData(hRequest, newLine,
-                                 static_cast<DWORD>(strlen(newLine)),
-                                 &dwBytesWritten)) goto error;
+            if (!WinHttpWriteData(hRequest, newLine,
+                static_cast<DWORD>(strlen(newLine)),
+                &dwBytesWritten)) goto error;
             checkSize += strlen(newLine);
         }
-        for(auto const& additional : additionals) {
-            if(!WinHttpWriteData(hRequest, additional.first.data(),
-                                 static_cast<DWORD>(additional.first.size()),
-                                 &dwBytesWritten)) goto error;
+        for (auto const& additional : additionals) {
+            if (!WinHttpWriteData(hRequest, additional.first.data(),
+                static_cast<DWORD>(additional.first.size()),
+                &dwBytesWritten)) goto error;
             checkSize += additional.first.size();
-            if(!WinHttpWriteData(hRequest, additional.second.data(),
-                                 static_cast<DWORD>(additional.second.size()),
-                                 &dwBytesWritten)) goto error;
+            if (!WinHttpWriteData(hRequest, additional.second.data(),
+                static_cast<DWORD>(additional.second.size()),
+                &dwBytesWritten)) goto error;
             checkSize += additional.second.size();
-            if(!WinHttpWriteData(hRequest, newLine,
-                                 static_cast<DWORD>(strlen(newLine)),
-                                 &dwBytesWritten)) goto error;
+            if (!WinHttpWriteData(hRequest, newLine,
+                static_cast<DWORD>(strlen(newLine)),
+                &dwBytesWritten)) goto error;
             checkSize += strlen(newLine);
         }
-        if(!WinHttpWriteData(hRequest, finalBody,
-                             static_cast<DWORD>(strlen(finalBody)),
-                             &dwBytesWritten)) goto error;
+        if (!WinHttpWriteData(hRequest, finalBody,
+            static_cast<DWORD>(strlen(finalBody)),
+            &dwBytesWritten)) goto error;
         checkSize += strlen(finalBody);
         assert(totalSize == checkSize);
 
         // End the request.
-        if(!WinHttpReceiveResponse(hRequest, NULL)) goto error;
+        if (!WinHttpReceiveResponse(hRequest, NULL)) goto error;
 
         // Keep checking for data until there is nothing left.
         do {
             // Check for available data.
             dwSize = 0;
-            if(!WinHttpQueryDataAvailable(hRequest, &dwSize))
+            if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
                 lxd::print("Error {} in WinHttpQueryDataAvailable.\n",
-                           GetLastError());
+                    GetLastError());
 
             // Allocate space for the buffer.
             auto pszOutBuffer = new char[dwSize + 1];
-            if(!pszOutBuffer) {
+            if (!pszOutBuffer) {
                 lxd::print("Out of memory\n");
                 dwSize = 0;
-            } else {
+            }
+            else {
                 // Read the data.
                 ZeroMemory(pszOutBuffer, dwSize + 1);
                 pszOutBuffer[dwSize] = '\0';
-                if(!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
-                                    dwSize, &dwDownloaded)) {
+                if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
+                    dwSize, &dwDownloaded)) {
                     lxd::print("Error {} in WinHttpReadData.\n", GetLastError());
-                } else {
+                }
+                else {
                     result += pszOutBuffer;
                 }
                 // Free the memory allocated to the buffer.
                 delete[] pszOutBuffer;
             }
-        } while(dwSize > 0);
+        } while (dwSize > 0);
 
     error:
-	    if (GetLastError() != 0)
+        if (GetLastError() != 0)
             lxd::print("Error {} has occurred.\n", GetLastError());
-    }
-
-    PostFormdata::~PostFormdata() {
-        // Close any open handles.
-        if(hRequest) WinHttpCloseHandle(hRequest);
-        if(hConnect) WinHttpCloseHandle(hConnect);
-        if(hSession) WinHttpCloseHandle(hSession);
     }
 
     PostFormUrlencoded::PostFormUrlencoded(const wchar_t* host, unsigned short port, const wchar_t* path, bool https,

@@ -4,7 +4,6 @@
 #include <Windows.h> // For Win32 API
 #include <Psapi.h>
 #include <shlobj_core.h>
-#include <PathCch.h>
 #else
 #include <unistd.h>
 #include <libproc.h>
@@ -15,10 +14,10 @@ namespace lxd {
 #ifdef _WIN32
         Char filename[MAX_PATH];
         HANDLE process = GetCurrentProcess();
-        auto size = GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
-        [[maybe_unused]] auto ok = PathCchRemoveFileSpec(filename, size);
-        assert(ok == S_OK);
-        return filename;
+        GetModuleFileNameExW(process, NULL, filename, MAX_PATH);
+        String result = filename;
+        result.resize(result.find_last_of(L'\\'));
+        return result;
 #else
         int ret;
         pid_t pid = getpid();

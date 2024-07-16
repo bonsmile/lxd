@@ -2,7 +2,6 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <fileapi.h>
-#include <pathcch.h>
 #else
 #include <unistd.h>
 #include <sys/stat.h>
@@ -43,13 +42,7 @@ namespace lxd {
 			: openModeCanCreate(openMode)
 			? OPEN_ALWAYS
 			: OPEN_EXISTING;
-
-		CREATEFILE2_EXTENDED_PARAMETERS param = {};
-		param.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-		param.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-		param.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
-		param.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-		HANDLE hFile = CreateFile2(path, accessRights, shareMode, creationDisp, &param);
+		HANDLE hFile = CreateFile(path, accessRights, shareMode, nullptr, creationDisp, FILE_ATTRIBUTE_NORMAL, NULL);
 		// Append or Truncate
 		if(openMode & OpenMode::Append) {
 			LONG lFileHigh = 0;
@@ -100,8 +93,9 @@ namespace lxd {
 			CloseHandle(handle.handle);
 			return false;
 		}
-		// write
-		if(!::WriteFile(handle.handle, buffer, static_cast<DWORD>(bufferSize), nullptr, nullptr)) {
+		// win7 里必须指定这个参数！
+		DWORD numberOfBytesWritten;
+		if(!::WriteFile(handle.handle, buffer, static_cast<DWORD>(bufferSize), &numberOfBytesWritten, nullptr)) {
 			CloseHandle(handle.handle);
 			return false;
 		}
@@ -135,7 +129,9 @@ namespace lxd {
 		// read
 		std::string buffer;
 		buffer.resize(size.QuadPart);
-		if(!::ReadFile(handle.handle, buffer.data(), static_cast<DWORD>(buffer.size()), nullptr, nullptr)) {
+		// win7 里必须指定这个参数！
+		DWORD numberOfBytesRead;
+		if(!::ReadFile(handle.handle, buffer.data(), static_cast<DWORD>(buffer.size()), &numberOfBytesRead, nullptr)) {
 			CloseHandle(handle.handle);
 			return {};
 		}
@@ -392,12 +388,8 @@ namespace lxd {
 		 assert(cbSize < MAX_PATH);
 
 		 // Remove filename from fully qualified pathname
-		 [[maybe_unused]] auto ok = ::PathCchRemoveFileSpec(buffer.data(), buffer.size());
-		 assert(S_OK == ok);
-		 wchar_t* pEnd;
-		 ok = PathCchAddBackslashEx(buffer.data(), cbSize, &pEnd, nullptr);
-		 assert(S_OK == ok);
-		 buffer.resize(pEnd - buffer.data());
+		 buffer.resize(cbSize);
+		 buffer.resize(buffer.find_last_of(L'\\') + 1);
 		 return buffer;
 #else
 		 char buffer[PATH_MAX];
