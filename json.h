@@ -1166,7 +1166,7 @@ static void ksJson_WriteValue( const ksJson * node, int recursion, char ** buffe
 				switch ( ptr[0] )
 				{
 					case '\\': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\\\\" ); break;
-					case '\"': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\"" ); break;
+					case '\"': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\\\"" ); break;
 					case '\b': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\\b" ); break;
 					case '\f': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\\f" ); break;
 					case '\n': ksJson_Printf( bufferInOut, lengthInOut, offsetInOut, 2, "\\n" ); break;
