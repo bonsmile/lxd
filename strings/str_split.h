@@ -443,8 +443,9 @@ struct AllowEmpty {
 // Note: `SkipEmpty()` does not consider a string containing only whitespace
 // to be empty. To skip such whitespace as well, use the `SkipWhitespace()`
 // predicate.
-template <typename CharT>
+
 struct SkipEmpty {
+  template<typename CharT>
   bool operator()(std::basic_string_view<CharT> sp) const { return !sp.empty(); }
 };
 
@@ -462,8 +463,9 @@ struct SkipEmpty {
 //   // SkipEmpty() would return whitespace elements
 //   std::vector<std::string> v = absl::StrSplit(" a , ,,b,", ',', SkipEmpty());
 //   // v[0] == " a ", v[1] == " ", v[2] == "b"
-template <typename CharT>
+
 struct SkipWhitespace {
+  template<typename CharT>
   bool operator()(std::basic_string_view<CharT> sp) const {
     sp = absl::StripAsciiWhitespace(sp);
     return !sp.empty();
