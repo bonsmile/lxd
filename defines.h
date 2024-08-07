@@ -58,6 +58,7 @@
     #include <iosfwd>
 #elif defined(CORRADE_TARGET_LIBSTDCXX)
     #include <bits/stringfwd.h>
+    #include <string_view>
 #else
     #include <string>
 #endif
