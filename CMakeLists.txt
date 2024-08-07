@@ -55,14 +55,14 @@ set(SRC_COMMON
 	smallvector.h
 	map.h
 	map.cpp
+	fileio.h
+	fileio.cpp
 	glb.h
 	glb.cpp
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(SRC_WIN32
-		fileio.h
-		fileio.cpp
 		crypt.h
 		crypt.cpp
 		utils.h
