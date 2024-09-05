@@ -10,7 +10,7 @@ if (BUILDING_CLANG_SLN)
 	message("/external:I disabled")
 endif()
 
-find_package(fmt REQUIRED CONFIG)
+find_package(fmt)
 
 set(VERSION_RC ${CMAKE_CURRENT_SOURCE_DIR}/version.rc)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dll.rc.in
@@ -55,14 +55,14 @@ set(SRC_COMMON
 	smallvector.h
 	map.h
 	map.cpp
-	fileio.h
-	fileio.cpp
 	glb.h
 	glb.cpp
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	set(SRC_WIN32
+		fileio.h
+		fileio.cpp
 		crypt.h
 		crypt.cpp
 		utils.h
