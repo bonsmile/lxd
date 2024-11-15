@@ -631,7 +631,7 @@ strings_internal::Splitter<
 DLL_PUBLIC StrSplit(StringType&& text, Delimiter d) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
-  return strings_internal::Splitter<DelimiterType, AllowEmpty<char>, std::string>(
+  return strings_internal::Splitter<DelimiterType, AllowEmpty<char>, std::string, char>(
       std::move(text), DelimiterType(d), AllowEmpty<char>());
 }
 
@@ -643,7 +643,7 @@ template <typename Delimiter, typename StringType,
    DLL_PUBLIC StrSplit(StringType&& text, Delimiter d) {
     using DelimiterType =
         typename strings_internal::SelectDelimiter<Delimiter>::type;
-    return strings_internal::Splitter<DelimiterType, AllowEmpty<wchar_t>, std::wstring>(
+    return strings_internal::Splitter<DelimiterType, AllowEmpty<wchar_t>, std::wstring, wchar_t>(
         std::move(text), DelimiterType(d), AllowEmpty<wchar_t>());
 }
 
@@ -681,7 +681,7 @@ strings_internal::Splitter<
 DLL_PUBLIC StrSplit(StringType&& text, Delimiter d, Predicate p) {
   using DelimiterType =
       typename strings_internal::SelectDelimiter<Delimiter>::type;
-  return strings_internal::Splitter<DelimiterType, Predicate, std::string>(
+  return strings_internal::Splitter<DelimiterType, Predicate, std::string, char>(
       std::move(text), DelimiterType(d), std::move(p));
 }
 
@@ -693,7 +693,7 @@ template <typename Delimiter, typename Predicate, typename StringType,
 DLL_PUBLIC StrSplit(StringType&& text, Delimiter d, Predicate p) {
     using DelimiterType =
         typename strings_internal::SelectDelimiter<Delimiter>::type;
-    return strings_internal::Splitter<DelimiterType, Predicate, std::wstring>(
+    return strings_internal::Splitter<DelimiterType, Predicate, std::wstring, wchar_t>(
         std::move(text), DelimiterType(d), std::move(p));
 }
 
