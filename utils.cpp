@@ -4,6 +4,7 @@
 #include <Windows.h> // For Win32 API
 #include <Psapi.h>
 #include <shlobj_core.h>
+#include <atomic>
 #else
 #include <unistd.h>
 #include <libproc.h>
@@ -147,5 +148,48 @@ namespace lxd {
 
         return result;
     }
+
+    struct TPContext {
+	    std::function<void(uint32_t)> func;
+	    std::atomic<uint32_t> id;
+    };
+
+    static void CALLBACK TPCallback(PTP_CALLBACK_INSTANCE, PVOID context, PTP_WORK) {
+	    TPContext* ctxt = (TPContext*)context;
+	    const uint32_t id = ctxt->id.fetch_add(1, std::memory_order_relaxed);
+	    ctxt->func(id);
+    }
 #endif
+
+    void RunParallel(uint32_t times, std::function<void(uint32_t)> func) noexcept {
+#ifdef _WIN32
+	    if (times == 0) {
+		    return;
+	    }
+
+	    if (times == 1) {
+		    return func(0);
+	    }
+
+	    TPContext ctxt = {func, 0};
+	    PTP_WORK work = CreateThreadpoolWork(TPCallback, &ctxt, nullptr);
+	    if (work) {
+		    // 在线程池中执行
+		    for (uint32_t i = 0; i < times; ++i) {
+			    SubmitThreadpoolWork(work);
+		    }
+
+		    WaitForThreadpoolWorkCallbacks(work, FALSE);
+		    CloseThreadpoolWork(work);
+	    } else {
+		    // 回退到单线程
+		    for (uint32_t i = 0; i < times; ++i) {
+			    func(i);
+		    }
+	    }
+#else
+	    static_assert(false, "Not implemented!");
+#endif // _WIN32
+    }
+
 }

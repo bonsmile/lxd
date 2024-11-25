@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #include <variant>
 #endif // _WIN32
+#include <functional>
 
 namespace lxd {
 	DLL_PUBLIC String GetDirOfExe();
@@ -21,4 +22,5 @@ namespace lxd {
 	DLL_PUBLIC void SetEnv(std::wstring_view name, std::wstring_view value);
 	DLL_PUBLIC std::variant<int, std::wstring> GetEnv(std::wstring_view name);
 #endif
+    DLL_PUBLIC void RunParallel(uint32_t times, std::function<void(uint32_t)> func) noexcept;
 }
