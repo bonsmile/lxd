@@ -61,6 +61,24 @@ namespace impl {
 		return result;
 	}
 
+	template<typename CHAR_T>
+	inline std::basic_string<CHAR_T> _ConcatHelper(std::initializer_list<std::basic_string_view<CHAR_T>> args) noexcept {
+		std::basic_string<CHAR_T> result;
+
+		size_t size = 0;
+		for (const std::basic_string_view<CHAR_T>& s : args) {
+			size += s.size();
+		}
+
+		result.reserve(size);
+
+		for (const std::basic_string_view<CHAR_T>& s : args) {
+			result.append(s);
+		}
+
+		return result;
+	}
+
 	template<typename CHAR_T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename... AV>
 	inline std::basic_string<CHAR_T> _Concat(
 	    T1&& s1,
@@ -77,24 +95,6 @@ namespace impl {
 		                              std::forward<T5>(s5),
 		                              std::forward<T6>(s6),
 		                              std::forward<AV>(args)...});
-	}
-
-	template<typename CHAR_T>
-	inline std::basic_string<CHAR_T> _ConcatHelper(std::initializer_list<std::basic_string_view<CHAR_T>> args) noexcept {
-		std::basic_string<CHAR_T> result;
-
-		size_t size = 0;
-		for (const std::basic_string_view<CHAR_T>& s: args) {
-			size += s.size();
-		}
-
-		result.reserve(size);
-
-		for (const std::basic_string_view<CHAR_T>& s: args) {
-			result.append(s);
-		}
-
-		return result;
 	}
 } // namespace impl
 
