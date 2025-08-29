@@ -57,6 +57,8 @@ set(SRC_COMMON
 	map.cpp
 	glb.h
 	glb.cpp
+	stl2ply.h
+	stl2ply.cpp
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
