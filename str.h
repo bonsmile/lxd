@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "defines.h"
 #include <vector>
@@ -61,24 +61,6 @@ namespace impl {
 		return result;
 	}
 
-	template<typename CHAR_T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename... AV>
-	inline std::basic_string<CHAR_T> _Concat(
-	    T1&& s1,
-	    T2&& s2,
-	    T3&& s3,
-	    T4&& s4,
-	    T5&& s5,
-	    T6&& s6,
-	    AV&&... args) noexcept {
-		return _ConcatHelper<CHAR_T>({std::forward<T1>(s1),
-		                              std::forward<T2>(s2),
-		                              std::forward<T3>(s3),
-		                              std::forward<T4>(s4),
-		                              std::forward<T5>(s5),
-		                              std::forward<T6>(s6),
-		                              std::forward<AV>(args)...});
-	}
-
 	template<typename CHAR_T>
 	inline std::basic_string<CHAR_T> _ConcatHelper(std::initializer_list<std::basic_string_view<CHAR_T>> args) noexcept {
 		std::basic_string<CHAR_T> result;
@@ -95,6 +77,24 @@ namespace impl {
 		}
 
 		return result;
+	}
+
+	template<typename CHAR_T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename... AV>
+	inline std::basic_string<CHAR_T> _Concat(
+	    T1&& s1,
+	    T2&& s2,
+	    T3&& s3,
+	    T4&& s4,
+	    T5&& s5,
+	    T6&& s6,
+	    AV&&... args) noexcept {
+		return _ConcatHelper<CHAR_T>({std::forward<T1>(s1),
+		                              std::forward<T2>(s2),
+		                              std::forward<T3>(s3),
+		                              std::forward<T4>(s4),
+		                              std::forward<T5>(s5),
+		                              std::forward<T6>(s6),
+		                              std::forward<AV>(args)...});
 	}
 } // namespace impl
 
