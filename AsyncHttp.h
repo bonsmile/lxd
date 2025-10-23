@@ -1,5 +1,7 @@
-﻿#pragma once
+#pragma once
+#if defined(__clang__)
 #pragma clang diagnostic ignored "-Wdelete-abstract-non-virtual-dtor"
+#endif
 
 #include "defines.h"
 #include "WinHTTPWrappers.h"
